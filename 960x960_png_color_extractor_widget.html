@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>960×960 PNG Color Extractor</title>
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load Inter Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased flex flex-col items-center justify-center p-4 sm:p-6 md:p-10 selection:bg-indigo-100 selection:text-indigo-900">
+
+  <!-- Main Widget Container -->
+  <main class="w-full max-w-3xl bg-white rounded-3xl shadow-xl shadow-slate-200/70 border border-slate-200/80 overflow-hidden transition-all duration-300">
+    
+    <!-- Header Section -->
+    <header class="px-6 py-6 sm:px-8 sm:py-7 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center shrink-0">
+            <!-- Palette SVG Icon -->
+            <svg class="w-6 h-6 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight">PNG Color Extractor</h1>
+            <p class="text-slate-300 text-xs sm:text-sm mt-0.5">Upload a 960 × 960 PNG to extract its exact RGB &amp; HEX palette</p>
+          </div>
+        </div>
+
+        <!-- Instant Sample Generator Button -->
+        <button
+          id="generateSampleBtn"
+          type="button"
+          class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium bg-white/10 hover:bg-white/20 active:bg-white/25 text-white border border-white/15 transition-colors cursor-pointer shrink-0"
+          title="Generates a valid 960x960 4-color PNG in memory and runs it through the extractor"
+        >
+          <svg class="w-4 h-4 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+          </svg>
+          <span>Test Sample 960×960 PNG</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Live Validation Checklist Bar -->
+    <section aria-label="Validation Requirements" class="px-6 py-4 sm:px-8 bg-slate-50 border-b border-slate-200/80">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4">
+        
+        <!-- Requirement 1: PNG Format -->
+        <div id="reqFormat" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 transition-colors">
+          <span id="reqFormatIcon" class="w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="4" fill="currentColor" />
+            </svg>
+          </span>
+          <div class="min-w-0">
+            <p class="text-xs font-semibold text-slate-800 truncate">PNG Format Only</p>
+            <p id="reqFormatSub" class="text-[11px] text-slate-500 truncate">.png extension &amp; header</p>
+          </div>
+        </div>
+
+        <!-- Requirement 2: 960 x 960 Dimensions -->
+        <div id="reqSize" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 transition-colors">
+          <span id="reqSizeIcon" class="w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="4" fill="currentColor" />
+            </svg>
+          </span>
+          <div class="min-w-0">
+            <p class="text-xs font-semibold text-slate-800 truncate">960 × 960 Pixels</p>
+            <p id="reqSizeSub" class="text-[11px] text-slate-500 truncate">Exact width &amp; height</p>
+          </div>
+        </div>
+
+        <!-- Requirement 3: Max 6 Colors -->
+        <div id="reqColors" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 transition-colors">
+          <span id="reqColorsIcon" class="w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="4" fill="currentColor" />
+            </svg>
+          </span>
+          <div class="min-w-0">
+            <p class="text-xs font-semibold text-slate-800 truncate">Maximum 6 Colors</p>
+            <p id="reqColorsSub" class="text-[11px] text-slate-500 truncate">1 to 6 unique colors</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Main Dynamic Body -->
+    <div class="p-6 sm:p-8">
+
+      <!-- Hidden File Input (restricted to .png) -->
+      <input
+        id="fileInput"
+        type="file"
+        accept=".png,image/png"
+        class="hidden"
+        aria-label="Upload 960 by 960 PNG image"
+      />
+
+      <!-- STATE 1: Upload Dropzone -->
+      <div id="uploadView" class="block">
+        <div
+          id="dropZone"
+          role="button"
+          tabindex="0"
+          aria-label="Drag and drop your 960 by 960 PNG image here, or click to browse"
+          class="group relative flex flex-col items-center justify-center text-center p-8 sm:p-12 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/70 hover:bg-indigo-50/40 hover:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 transition-all cursor-pointer"
+        >
+          <div class="w-16 h-16 rounded-2xl bg-white shadow-sm border border-slate-200 group-hover:border-indigo-200 group-hover:scale-105 flex items-center justify-center mb-4 transition-all">
+            <svg class="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+          </div>
+
+          <h2 class="text-base sm:text-lg font-semibold text-slate-900">
+            Drop your <span class="text-indigo-600">960 × 960 PNG</span> here
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1.5 max-w-md">
+            or click anywhere in this box to select a file from your device
+          </p>
+
+          <div class="mt-6">
+            <span class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 group-hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm shadow-indigo-600/20 transition-colors">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Choose PNG File
+            </span>
+          </div>
+
+          <p class="mt-5 text-[11px] text-slate-400">
+            Strict checks: .png format &bull; 960×960 px &bull; &le; 6 unique colors
+          </p>
+        </div>
+      </div>
+
+      <!-- STATE 2: Processing / Scanning Indicator -->
+      <div id="loadingView" class="hidden py-14 flex flex-col items-center justify-center text-center">
+        <div class="w-12 h-12 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin mb-4"></div>
+        <h2 id="loadingTitle" class="text-base font-semibold text-slate-900">Validating PNG file...</h2>
+        <p id="loadingSubtitle" class="text-xs sm:text-sm text-slate-500 mt-1">Checking format, dimensions, and scanning pixels</p>
+      </div>
+
+      <!-- STATE 3: Error Card View -->
+      <div id="errorView" class="hidden">
+        <div class="rounded-2xl bg-rose-50/80 border border-rose-200 p-6 sm:p-8 text-center">
+          <div class="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+
+          <span id="errorBadge" class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 mb-2">
+            Validation Failed
+          </span>
+          <h2 id="errorTitle" class="text-lg sm:text-xl font-bold text-slate-900">
+            Unable to process image
+          </h2>
+          <p id="errorMessage" class="text-sm text-slate-600 mt-2 max-w-lg mx-auto leading-relaxed">
+            An unexpected error occurred while inspecting your file.
+          </p>
+
+          <div id="errorFileMeta" class="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white border border-rose-200/80 text-xs text-slate-500 font-mono max-w-full truncate">
+            <!-- Populated dynamically with filename -->
+          </div>
+
+          <div class="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              id="tryAgainBtn"
+              type="button"
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-sm font-semibold shadow-sm shadow-rose-600/20 transition-colors cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATE 4: Success Results View -->
+      <div id="resultsView" class="hidden space-y-6">
+        
+        <!-- Image Summary Header Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/90">
+          <div class="flex items-center gap-4 min-w-0">
+            <!-- Checkerboard-backed Thumbnail Preview -->
+            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-slate-300 shadow-sm shrink-0 bg-[linear-gradient(45deg,#e2e8f0_25%,transparent_25%),linear-gradient(-45deg,#e2e8f0_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#e2e8f0_75%),linear-gradient(-45deg,transparent_75%,#e2e8f0_75%)] bg-[length:12px_12px] bg-[position:0_0,0_6px,6px_-6px,-6px_0]">
+              <img id="previewThumbnail" src="" alt="Uploaded 960x960 PNG preview" class="w-full h-full object-contain" />
+            </div>
+
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span id="colorCountBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  0 unique colors found
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-200/80 text-slate-700">
+                  960 × 960 PNG
+                </span>
+              </div>
+              <p id="resultFileName" class="text-sm font-semibold text-slate-900 truncate mt-1.5" title="">
+                image.png
+              </p>
+              <p id="resultTransparencyNote" class="text-xs text-slate-500 mt-0.5">
+                921,600 total pixels analyzed
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              id="copyAllBtn"
+              type="button"
+              class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+              title="Copy all HEX and RGB values to clipboard"
+            >
+              <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+              </svg>
+              <span>Copy All</span>
+            </button>
+
+            <button
+              id="uploadAnotherBtn"
+              type="button"
+              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm shadow-indigo-600/20 transition-colors cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              <span>Upload Another</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Extracted Color Palette List -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Extracted Palette (Sorted by Pixel Coverage)
+            </h3>
+            <span class="text-xs text-slate-400">Click any code to copy</span>
+          </div>
+
+          <div id="colorList" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <!-- Color Cards Rendered Here Dynamically -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Toast Notification for Clipboard Feedback -->
+  <div
+    id="toast"
+    role="status"
+    aria-live="polite"
+    class="fixed bottom-5 left-1/2 -translate-x-1/2 translate-y-16 opacity-0 pointer-events-none transition-all duration-200 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-medium shadow-lg"
+  >
+    <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+    <span id="toastText">Copied to clipboard!</span>
+  </div>
+
+  <!-- Offscreen Canvas for Pixel Inspection -->
+  <canvas id="analysisCanvas" class="hidden"></canvas>
+
+  <script>
+    /**
+     * 960x960 PNG Color Extractor Widget
+     * Validates:
+     *  1. PNG file extension, MIME type, and 8-byte binary PNG signature.
+     *  2. Exact image dimensions (960 x 960 pixels).
+     *  3. Maximum of 6 unique colors across all pixels (with early exit > 6).
+     */
+    (function () {
+      'use strict';
+
+      // Constants
+      const REQUIRED_WIDTH = 960;
+      const REQUIRED_HEIGHT = 960;
+      const MAX_COLORS = 6;
+      const PNG_SIGNATURE = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+      // DOM Elements
+      const fileInput = document.getElementById('fileInput');
+      const dropZone = document.getElementById('dropZone');
+      const generateSampleBtn = document.getElementById('generateSampleBtn');
+
+      const uploadView = document.getElementById('uploadView');
+      const loadingView = document.getElementById('loadingView');
+      const loadingTitle = document.getElementById('loadingTitle');
+      const loadingSubtitle = document.getElementById('loadingSubtitle');
+      const errorView = document.getElementById('errorView');
+      const resultsView = document.getElementById('resultsView');
+
+      // Error View Elements
+      const errorBadge = document.getElementById('errorBadge');
+      const errorTitle = document.getElementById('errorTitle');
+      const errorMessage = document.getElementById('errorMessage');
+      const errorFileMeta = document.getElementById('errorFileMeta');
+      const tryAgainBtn = document.getElementById('tryAgainBtn');
+
+      // Results View Elements
+      const previewThumbnail = document.getElementById('previewThumbnail');
+      const colorCountBadge = document.getElementById('colorCountBadge');
+      const resultFileName = document.getElementById('resultFileName');
+      const resultTransparencyNote = document.getElementById('resultTransparencyNote');
+      const colorList = document.getElementById('colorList');
+      const copyAllBtn = document.getElementById('copyAllBtn');
+      const uploadAnotherBtn = document.getElementById('uploadAnotherBtn');
+
+      // Checklist Elements
+      const reqEls = {
+        format: {
+          card: document.getElementById('reqFormat'),
+          icon: document.getElementById('reqFormatIcon'),
+          sub: document.getElementById('reqFormatSub'),
+          defaultSub: '.png extension & header',
+        },
+        size: {
+          card: document.getElementById('reqSize'),
+          icon: document.getElementById('reqSizeIcon'),
+          sub: document.getElementById('reqSizeSub'),
+          defaultSub: 'Exact width & height',
+        },
+        colors: {
+          card: document.getElementById('reqColors'),
+          icon: document.getElementById('reqColorsIcon'),
+          sub: document.getElementById('reqColorsSub'),
+          defaultSub: '1 to 6 unique colors',
+        },
+      };
+
+      const analysisCanvas = document.getElementById('analysisCanvas');
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toastText');
+
+      let currentObjectUrl = null;
+      let extractedColorsCache = [];
+      let toastTimer = null;
+
+      /**
+       * Updates one of the three validation requirement pills in the top checklist.
+       * @param {'format'|'size'|'colors'} key
+       * @param {'neutral'|'pass'|'fail'} status
+       * @param {string} [subtitleText]
+       */
+      function setRequirementStatus(key, status, subtitleText) {
+        const item = reqEls[key];
+        if (!item) return;
+
+        item.sub.textContent = subtitleText || item.defaultSub;
+
+        if (status === 'pass') {
+          item.card.className = 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 transition-colors';
+          item.icon.className = 'w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0';
+          item.icon.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>';
+        } else if (status === 'fail') {
+          item.card.className = 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-rose-50/90 border border-rose-200 transition-colors';
+          item.icon.className = 'w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0';
+          item.icon.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
+        } else {
+          item.card.className = 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 transition-colors';
+          item.icon.className = 'w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0';
+          item.icon.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="4" fill="currentColor" /></svg>';
+        }
+      }
+
+      /**
+       * Resets the entire widget back to the initial upload state.
+       */
+      function resetWidget() {
+        if (currentObjectUrl) {
+          URL.revokeObjectURL(currentObjectUrl);
+          currentObjectUrl = null;
+        }
+        fileInput.value = '';
+        extractedColorsCache = [];
+
+        setRequirementStatus('format', 'neutral');
+        setRequirementStatus('size', 'neutral');
+        setRequirementStatus('colors', 'neutral');
+
+        showView('upload');
+      }
+
+      /**
+       * Switches active UI view panel.
+       * @param {'upload'|'loading'|'error'|'results'} viewName
+       */
+      function showView(viewName) {
+        uploadView.classList.toggle('hidden', viewName !== 'upload');
+        loadingView.classList.toggle('hidden', viewName !== 'loading');
+        errorView.classList.toggle('hidden', viewName !== 'error');
+        resultsView.classList.toggle('hidden', viewName !== 'results');
+      }
+
+      /**
+       * Displays a descriptive error card with a Try Again button.
+       */
+      function showError({ badge, title, message, fileName }) {
+        errorBadge.textContent = badge || 'Validation Failed';
+        errorTitle.textContent = title;
+        errorMessage.textContent = message;
+
+        if (fileName) {
+          errorFileMeta.textContent = `File: ${fileName}`;
+          errorFileMeta.classList.remove('hidden');
+        } else {
+          errorFileMeta.classList.add('hidden');
+        }
+
+        showView('error');
+      }
+
+      /**
+       * Verifies the file has a .png extension, image/png MIME type (when provided),
+       * and starts with the exact 8-byte PNG magic header.
+       * @param {File} file
+       * @returns {Promise<{valid: boolean, reason?: string}>}
+       */
+      async function verifyPngSignature(file) {
+        const lowerName = (file.name || '').toLowerCase();
+        if (!lowerName.endsWith('.png')) {
+          return {
+            valid: false,
+            reason: `The file "${file.name}" does not have a .png extension. Please upload a valid .png image file.`,
+          };
+        }
+
+        if (file.type && file.type !== 'image/png') {
+          return {
+            valid: false,
+            reason: `Invalid MIME type (${file.type}). Only genuine .png images are accepted.`,
+          };
+        }
+
+        try {
+          const headerSlice = file.slice(0, 8);
+          const buffer = await headerSlice.arrayBuffer();
+          const bytes = new Uint8Array(buffer);
+
+          if (bytes.length < 8) {
+            return {
+              valid: false,
+              reason: 'The selected file is empty or corrupted and is not a valid PNG file.',
+            };
+          }
+
+          for (let i = 0; i < PNG_SIGNATURE.length; i++) {
+            if (bytes[i] !== PNG_SIGNATURE[i]) {
+              return {
+                valid: false,
+                reason: 'Invalid file format. Even though the file ends in .png, its binary header is not in PNG format. Please export or save the image as a true .png file.',
+              };
+            }
+          }
+
+          return { valid: true };
+        } catch (err) {
+          return {
+            valid: false,
+            reason: 'Could not read the file header. Please verify the file is readable and try again.',
+          };
+        }
+      }
+
+      /**
+       * Loads a File into an HTMLImageElement to verify natural dimensions.
+       * @param {File} file
+       * @returns {Promise<{img: HTMLImageElement, url: string}>}
+       */
+      function loadImageElement(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+
+          img.onload = () => resolve({ img, url });
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('The PNG image could not be decoded. It may be corrupted.'));
+          };
+
+          img.src = url;
+        });
+      }
+
+      /**
+       * Scans all pixels of the 960x960 image on an offscreen canvas.
+       * Stops immediately if more than MAX_COLORS (6) unique colors are found.
+       * @param {HTMLImageElement} img
+       */
+      function extractColorsFromImage(img) {
+        analysisCanvas.width = REQUIRED_WIDTH;
+        analysisCanvas.height = REQUIRED_HEIGHT;
+
+        const ctx = analysisCanvas.getContext('2d', { willReadFrequently: true });
+        ctx.clearRect(0, 0, REQUIRED_WIDTH, REQUIRED_HEIGHT);
+        ctx.drawImage(img, 0, 0, REQUIRED_WIDTH, REQUIRED_HEIGHT);
+
+        const imageData = ctx.getImageData(0, 0, REQUIRED_WIDTH, REQUIRED_HEIGHT);
+        const data = imageData.data;
+        const totalPixels = REQUIRED_WIDTH * REQUIRED_HEIGHT;
+
+        // Map keyed by packed 32-bit RGBA integer -> { r, g, b, a, count }
+        const colorMap = new Map();
+        let transparentPixels = 0;
+        let hasSemiTransparency = false;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+
+          // Ignore fully transparent pixels (alpha === 0) so transparent backgrounds don't pollute palette
+          if (a === 0) {
+            transparentPixels++;
+            continue;
+          }
+
+          if (a < 255) {
+            hasSemiTransparency = true;
+          }
+
+          // Pack RGBA into a single unsigned 32-bit integer for ultra-fast lookup
+          const key = (((r << 24) | (g << 16) | (b << 8) | a) >>> 0);
+
+          const existing = colorMap.get(key);
+          if (existing) {
+            existing.count++;
+          } else {
+            // Early exit as soon as a 7th distinct color is encountered
+            if (colorMap.size >= MAX_COLORS) {
+              return {
+                exceededMaxColors: true,
+              };
+            }
+            colorMap.set(key, { r, g, b, a, count: 1 });
+          }
+        }
+
+        const opaqueOrVisiblePixels = totalPixels - transparentPixels;
+
+        if (colorMap.size === 0) {
+          return {
+            emptyTransparent: true,
+          };
+        }
+
+        // Convert to sorted array (most frequent color first)
+        const colors = Array.from(colorMap.values())
+          .sort((a, b) => b.count - a.count)
+          .map((c) => {
+            const hexRgb =
+              '#' +
+              [c.r, c.g, c.b]
+                .map((v) => v.toString(16).padStart(2, '0').toUpperCase())
+                .join('');
+
+            const alphaFloat = +(c.a / 255).toFixed(2);
+            const hexFull =
+              c.a === 255
+                ? hexRgb
+                : hexRgb + c.a.toString(16).padStart(2, '0').toUpperCase();
+
+            const rgbString =
+              c.a === 255
+                ? `rgb(${c.r}, ${c.g}, ${c.b})`
+                : `rgba(${c.r}, ${c.g}, ${c.b}, ${alphaFloat})`;
+
+            const percentage = ((c.count / opaqueOrVisiblePixels) * 100).toFixed(1);
+
+            return {
+              r: c.r,
+              g: c.g,
+              b: c.b,
+              a: c.a,
+              hex: hexFull,
+              rgb: rgbString,
+              count: c.count,
+              percentage,
+            };
+          });
+
+        return {
+          exceededMaxColors: false,
+          colors,
+          transparentPixels,
+          hasSemiTransparency,
+        };
+      }
+
+      /**
+       * Main validation & extraction pipeline triggered when a file is chosen or dropped.
+       * @param {File} file
+       */
+      async function processUploadedFile(file) {
+        if (!file) return;
+
+        // Clean up any previous preview URL
+        if (currentObjectUrl) {
+          URL.revokeObjectURL(currentObjectUrl);
+          currentObjectUrl = null;
+        }
+
+        // Reset checklist before running step-by-step checks
+        setRequirementStatus('format', 'neutral');
+        setRequirementStatus('size', 'neutral');
+        setRequirementStatus('colors', 'neutral');
+
+        loadingTitle.textContent = 'Checking file format...';
+        loadingSubtitle.textContent = file.name;
+        showView('loading');
+
+        // STEP 1: Verify .png format & binary PNG header
+        const formatCheck = await verifyPngSignature(file);
+        if (!formatCheck.valid) {
+          setRequirementStatus('format', 'fail', 'Not a valid PNG');
+          showError({
+            badge: 'Step 1 Failed • Format Check',
+            title: 'Invalid File Format',
+            message: formatCheck.reason,
+            fileName: file.name,
+          });
+          return;
+        }
+        setRequirementStatus('format', 'pass', 'Verified .png');
+
+        // STEP 2: Load image & check exact 960 x 960 dimensions
+        loadingTitle.textContent = 'Checking image dimensions...';
+        let loaded;
+        try {
+          loaded = await loadImageElement(file);
+        } catch (err) {
+          setRequirementStatus('size', 'fail', 'Unreadable PNG');
+          showError({
+            badge: 'Step 2 Failed • Image Load',
+            title: 'Corrupted PNG File',
+            message: err.message,
+            fileName: file.name,
+          });
+          return;
+        }
+
+        const { img, url } = loaded;
+        const width = img.naturalWidth;
+        const height = img.naturalHeight;
+
+        if (width !== REQUIRED_WIDTH || height !== REQUIRED_HEIGHT) {
+          URL.revokeObjectURL(url);
+          setRequirementStatus('size', 'fail', `Detected ${width} × ${height}`);
+          showError({
+            badge: 'Step 2 Failed • Dimension Check',
+            title: 'Invalid Image Dimensions',
+            message: `Invalid image dimensions: detected ${width} × ${height} px. The uploaded PNG must be exactly ${REQUIRED_WIDTH} × ${REQUIRED_HEIGHT} px.`,
+            fileName: file.name,
+          });
+          return;
+        }
+        setRequirementStatus('size', 'pass', '960 × 960 px');
+
+        // STEP 3: Scan pixels and verify maximum of 6 colors
+        loadingTitle.textContent = 'Scanning pixels for unique colors...';
+        loadingSubtitle.textContent = 'Analyzing 921,600 pixels';
+
+        // Yield briefly so the loading spinner updates smoothly on slower devices
+        await new Promise((r) => setTimeout(r, 30));
+
+        const scanResult = extractColorsFromImage(img);
+
+        if (scanResult.exceededMaxColors) {
+          URL.revokeObjectURL(url);
+          setRequirementStatus('colors', 'fail', 'More than 6 colors');
+          showError({
+            badge: 'Step 3 Failed • Color Limit',
+            title: 'Too Many Colors Detected',
+            message: `This image contains more than ${MAX_COLORS} unique colors (anti-aliasing or gradients often introduce extra shades). Please upload a PNG with a maximum of ${MAX_COLORS} colors.`,
+            fileName: file.name,
+          });
+          return;
+        }
+
+        if (scanResult.emptyTransparent) {
+          URL.revokeObjectURL(url);
+          setRequirementStatus('colors', 'fail', '0 visible colors');
+          showError({
+            badge: 'Step 3 Failed • Empty Image',
+            title: 'No Visible Colors Found',
+            message: 'The uploaded 960 × 960 PNG is completely transparent and contains 0 visible colors.',
+            fileName: file.name,
+          });
+          return;
+        }
+
+        // All 3 checks passed!
+        const foundCount = scanResult.colors.length;
+        setRequirementStatus(
+          'colors',
+          'pass',
+          `${foundCount} ${foundCount === 1 ? 'color' : 'colors'} used`
+        );
+
+        currentObjectUrl = url;
+        extractedColorsCache = scanResult.colors;
+        renderResults(file.name, url, scanResult);
+      }
+
+      /**
+       * Renders the extracted color cards and image summary into the results view.
+       */
+      function renderResults(fileName, imageUrl, scanResult) {
+        const { colors, transparentPixels, hasSemiTransparency } = scanResult;
+        const count = colors.length;
+
+        previewThumbnail.src = imageUrl;
+        resultFileName.textContent = fileName;
+        resultFileName.title = fileName;
+
+        colorCountBadge.innerHTML = `
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          ${count} unique ${count === 1 ? 'color' : 'colors'} found
+        `;
+
+        if (transparentPixels > 0) {
+          const pct = ((transparentPixels / (REQUIRED_WIDTH * REQUIRED_HEIGHT)) * 100).toFixed(1);
+          resultTransparencyNote.textContent = `921,600 px scanned (${pct}% fully transparent ignored)`;
+        } else if (hasSemiTransparency) {
+          resultTransparencyNote.textContent = '921,600 px scanned (includes semi-transparent alpha)';
+        } else {
+          resultTransparencyNote.textContent = '921,600 opaque pixels analyzed';
+        }
+
+        colorList.innerHTML = '';
+
+        colors.forEach((color) => {
+          const card = document.createElement('div');
+          card.className =
+            'flex items-center gap-4 p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:border-indigo-300 transition-all';
+
+          // Visual Swatch with checkerboard behind it in case alpha < 255
+          const swatchWrapper = document.createElement('div');
+          swatchWrapper.className =
+            'w-14 h-14 sm:w-16 sm:h-16 rounded-xl border border-slate-300/80 shadow-inner shrink-0 overflow-hidden bg-[linear-gradient(45deg,#e2e8f0_25%,transparent_25%),linear-gradient(-45deg,#e2e8f0_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#e2e8f0_75%),linear-gradient(-45deg,transparent_75%,#e2e8f0_75%)] bg-[length:10px_10px] bg-[position:0_0,0_5px,5px_-5px,-5px_0]';
+
+          const swatchFill = document.createElement('div');
+          swatchFill.className = 'w-full h-full';
+          swatchFill.style.backgroundColor = color.rgb;
+          swatchWrapper.appendChild(swatchFill);
+
+          // Info & Copy Controls
+          const details = document.createElement('div');
+          details.className = 'flex-1 min-w-0 space-y-1.5';
+
+          // Top Row: HEX Copy Button + Coverage Pill
+          const topRow = document.createElement('div');
+          topRow.className = 'flex items-center justify-between gap-2';
+
+          const hexBtn = createCopyChip(color.hex, `Copied ${color.hex}`);
+          const pctBadge = document.createElement('span');
+          pctBadge.className =
+            'text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0';
+          pctBadge.textContent = `${color.percentage}%`;
+
+          topRow.appendChild(hexBtn);
+          topRow.appendChild(pctBadge);
+
+          // Bottom Row: RGB Copy Button
+          const bottomRow = document.createElement('div');
+          const rgbBtn = createCopyChip(color.rgb, `Copied ${color.rgb}`, true);
+          bottomRow.appendChild(rgbBtn);
+
+          details.appendChild(topRow);
+          details.appendChild(bottomRow);
+
+          card.appendChild(swatchWrapper);
+          card.appendChild(details);
+          colorList.appendChild(card);
+        });
+
+        showView('results');
+      }
+
+      /**
+       * Creates a clean one-click copy button chip for HEX or RGB values.
+       */
+      function createCopyChip(valueText, toastMessage, isSecondary = false) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = isSecondary
+          ? 'group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-200 font-mono text-xs transition-colors cursor-pointer max-w-full'
+          : 'group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 text-slate-900 hover:text-indigo-700 border border-transparent hover:border-indigo-200 font-mono text-xs sm:text-sm font-semibold transition-colors cursor-pointer max-w-full';
+        btn.title = `Click to copy ${valueText}`;
+
+        const label = document.createElement('span');
+        label.className = 'truncate';
+        label.textContent = valueText;
+
+        const icon = document.createElement('span');
+        icon.className = 'text-slate-400 group-hover:text-indigo-600 shrink-0';
+        icon.innerHTML =
+          '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>';
+
+        btn.appendChild(label);
+        btn.appendChild(icon);
+
+        btn.addEventListener('click', () => {
+          copyToClipboard(valueText, toastMessage);
+        });
+
+        return btn;
+      }
+
+      /**
+       * Copies text reliably using a temporary textarea + execCommand('copy')
+       * so it works seamlessly inside sandboxed iframes as well as standard tabs.
+       */
+      function copyToClipboard(text, message) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        textArea.style.top = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        let copied = false;
+        try {
+          copied = document.execCommand('copy');
+        } catch (err) {
+          copied = false;
+        }
+        document.body.removeChild(textArea);
+
+        if (copied) {
+          showToast(message || `Copied ${text}`);
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast(message || `Copied ${text}`);
+          });
+        }
+      }
+
+      /**
+       * Displays a brief floating toast notification.
+       */
+      function showToast(msg) {
+        toastText.textContent = msg;
+        toast.classList.remove('translate-y-16', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.add('translate-y-16', 'opacity-0');
+          toast.classList.remove('translate-y-0', 'opacity-100');
+        }, 2200);
+      }
+
+      /**
+       * Generates a crisp, aliased-free 960x960 4-color PNG in memory
+       * so users can test the widget immediately with one click.
+       */
+      function generateAndTestSamplePng() {
+        const sampleCanvas = document.createElement('canvas');
+        sampleCanvas.width = REQUIRED_WIDTH;
+        sampleCanvas.height = REQUIRED_HEIGHT;
+        const ctx = sampleCanvas.getContext('2d');
+
+        // Disable smoothing to guarantee strictly 4 exact colors without anti-aliased intermediate pixels
+        ctx.imageSmoothingEnabled = false;
+
+        // 4 clean geometric color blocks
+        ctx.fillStyle = '#1E293B'; // Slate 800
+        ctx.fillRect(0, 0, 960, 960);
+
+        ctx.fillStyle = '#4F46E5'; // Indigo 600
+        ctx.fillRect(0, 0, 480, 480);
+
+        ctx.fillStyle = '#10B981'; // Emerald 500
+        ctx.fillRect(480, 480, 480, 480);
+
+        ctx.fillStyle = '#F59E0B'; // Amber 500
+        ctx.fillRect(240, 240, 480, 480);
+
+        sampleCanvas.toBlob((blob) => {
+          if (!blob) return;
+          const sampleFile = new File([blob], 'sample-4-colors-960x960.png', {
+            type: 'image/png',
+          });
+          processUploadedFile(sampleFile);
+        }, 'image/png');
+      }
+
+      // --- Event Listeners ---
+
+      // Click / Keyboard on DropZone
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      // File Input Change
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          processUploadedFile(file);
+        }
+      });
+
+      // Drag and Drop Handlers
+      ['dragenter', 'dragover'].forEach((eventName) => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('border-indigo-500', 'bg-indigo-50/70', 'scale-[1.01]');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach((eventName) => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/70', 'scale-[1.01]');
+        });
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        const files = e.dataTransfer && e.dataTransfer.files;
+        if (files && files.length > 0) {
+          processUploadedFile(files[0]);
+        }
+      });
+
+      // Reset / Try Again Buttons
+      tryAgainBtn.addEventListener('click', () => {
+        resetWidget();
+        fileInput.click();
+      });
+
+      uploadAnotherBtn.addEventListener('click', () => {
+        resetWidget();
+      });
+
+      // Copy All Extracted Colors
+      copyAllBtn.addEventListener('click', () => {
+        if (!extractedColorsCache.length) return;
+        const formatted = extractedColorsCache
+          .map((c) => `${c.hex} | ${c.rgb} (${c.percentage}%)`)
+          .join('\n');
+        copyToClipboard(formatted, `Copied all ${extractedColorsCache.length} colors!`);
+      });
+
+      // Sample Generator Button
+      generateSampleBtn.addEventListener('click', generateAndTestSamplePng);
+    })();
+  </script>
+</body>
+</html>
