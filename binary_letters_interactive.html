@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Binary Letters Interactive (5-Bit Decoder)</title>
+  <style>
+    /* ==========================================================================
+       1. DESIGN TOKENS & GREEN THEME PALETTE
+       ========================================================================== */
+    :root {
+      --bg-page-top: #064e3b;      /* Deep emerald forest green */
+      --bg-page-bottom: #065f46;   /* Rich emerald green */
+      --bg-surface: #ffffff;
+      --bg-subtle: #f0fdf4;        /* Soft mint tint */
+      --bg-mint-pill: #dcfce7;
+      --border-light: #bbf7d0;
+      --border-medium: #86efac;
+
+      --text-primary: #052e16;     /* Very dark forest green */
+      --text-secondary: #166534;
+      --text-muted: #4b5563;
+      --text-on-green: #ecfdf5;
+
+      --brand-green: #15803d;
+      --brand-green-dark: #14532d;
+      --brand-green-bright: #16a34a;
+
+      --warn-bg: #fef2f2;
+      --warn-border: #fca5a5;
+      --warn-text: #b91c1c;
+
+      --card-shadow: 0 12px 24px -6px rgba(2, 44, 34, 0.28), 0 4px 10px -2px rgba(2, 44, 34, 0.14);
+      --card-shadow-hover: 0 18px 32px -6px rgba(2, 44, 34, 0.36), 0 8px 14px -3px rgba(2, 44, 34, 0.18);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: linear-gradient(160deg, var(--bg-page-top) 0%, var(--bg-page-bottom) 100%);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem 2.5rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ==========================================================================
+       2. LAYOUT & HEADER
+       ========================================================================== */
+    .app-container {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .app-header {
+      text-align: center;
+      color: var(--text-on-green);
+      padding: 0.25rem 0;
+    }
+
+    .app-header h1 {
+      font-size: clamp(1.45rem, 2.8vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .app-header p {
+      font-size: 0.95rem;
+      color: #d1fae5;
+      margin-top: 0.3rem;
+    }
+
+    /* ==========================================================================
+       3. CONTROL BAR & TOGGLES
+       ========================================================================== */
+    .toolbar {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 0.85rem 1.15rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      box-shadow: 0 4px 14px rgba(2, 44, 34, 0.16);
+    }
+
+    .control-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      padding: 0.48rem 0.9rem;
+      cursor: pointer;
+      border: 1px solid var(--border-medium);
+      background-color: var(--bg-subtle);
+      color: var(--text-primary);
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      user-select: none;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: var(--bg-mint-pill);
+      border-color: var(--brand-green);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:focus-visible, .toggle-pill:focus-within {
+      outline: 3px solid rgba(34, 197, 94, 0.45);
+      outline-offset: 2px;
+    }
+
+    button.btn-primary {
+      background-color: var(--brand-green);
+      border-color: var(--brand-green);
+      color: #ffffff;
+    }
+
+    button.btn-primary:hover:not(:disabled) {
+      background-color: var(--brand-green-dark);
+      border-color: var(--brand-green-dark);
+    }
+
+    .toggle-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-subtle);
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease;
+    }
+
+    .toggle-pill:hover {
+      background: var(--bg-mint-pill);
+    }
+
+    .toggle-pill input[type="checkbox"] {
+      accent-color: var(--brand-green);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ==========================================================================
+       3B. TARGET LETTER CHALLENGE BANNER
+       ========================================================================== */
+    .challenge-bar {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border: 2px solid #f59e0b;
+      border-radius: var(--radius-lg);
+      padding: 0.9rem 1.2rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem;
+      box-shadow: 0 6px 18px rgba(2, 44, 34, 0.18);
+      transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+    }
+
+    .challenge-bar.solved {
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      border-color: #16a34a;
+    }
+
+    .challenge-prompt {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: #78350f;
+    }
+
+    .challenge-bar.solved .challenge-prompt {
+      color: #14532d;
+    }
+
+    .target-letter-badge {
+      font-family: var(--font-mono);
+      font-size: 1.45rem;
+      font-weight: 800;
+      background: #ffffff;
+      color: #b45309;
+      padding: 0.1rem 0.75rem;
+      border-radius: var(--radius-sm);
+      border: 2px solid #fbbf24;
+      box-shadow: 0 2px 5px rgba(180, 83, 9, 0.12);
+      line-height: 1.25;
+    }
+
+    .challenge-bar.solved .target-letter-badge {
+      color: #15803d;
+      border-color: #4ade80;
+      box-shadow: 0 2px 5px rgba(21, 128, 61, 0.15);
+    }
+
+    .challenge-feedback {
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .streak-badge {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.85);
+      color: var(--brand-green-dark);
+      border: 1px solid var(--border-medium);
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+    }
+
+    .challenge-bar.solved .streak-badge {
+      background: #ffffff;
+      border-color: #22c55e;
+      color: #15803d;
+    }
+
+    /* ==========================================================================
+       4. ALPHABET CODE REFERENCE DRAWER (COLLAPSIBLE)
+       ========================================================================== */
+    .reference-drawer {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.15rem;
+      box-shadow: 0 4px 14px rgba(2, 44, 34, 0.14);
+    }
+
+    .reference-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.65rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .alphabet-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(54px, 1fr));
+      gap: 0.4rem;
+    }
+
+    .alpha-cell {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 0.3rem 0.25rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .alpha-cell:hover {
+      background: var(--bg-mint-pill);
+      border-color: var(--brand-green);
+      transform: translateY(-1px);
+    }
+
+    .alpha-cell.active-match {
+      background: var(--brand-green);
+      border-color: var(--brand-green-dark);
+      color: #ffffff;
+    }
+
+    .alpha-letter {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .alpha-num {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      opacity: 0.8;
+    }
+
+    /* ==========================================================================
+       5. BINARY CARDS STAGE & 3D FLIP MECHANICS
+       ========================================================================== */
+    .stage-wrapper {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-xl);
+      padding: 1.75rem 1.25rem 1.85rem;
+      box-shadow: 0 10px 25px rgba(2, 44, 34, 0.22);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .cards-grid {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: clamp(0.55rem, 2vw, 1.35rem);
+      width: 100%;
+      padding: 0.35rem 0.25rem 0.5rem;
+    }
+
+    /* Individual card column (Card + Bit Indicator underneath) */
+    .card-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.7rem;
+      flex: 0 1 142px;
+      min-width: 62px;
+    }
+
+    /* 3D Perspective Container */
+    .card-scene {
+      width: 100%;
+      aspect-ratio: 2.5 / 3.6;
+      perspective: 1000px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      border-radius: var(--radius-md);
+    }
+
+    .card-scene:focus-visible {
+      outline: 3px solid var(--brand-green-bright);
+      outline-offset: 4px;
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-style: preserve-3d;
+    }
+
+    /* When face-down (bit = 0), rotate 180deg to show card back */
+    .card-scene.is-off .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-scene:hover .card-inner {
+      transform: translateY(-4px);
+    }
+
+    .card-scene.is-off:hover .card-inner {
+      transform: rotateY(180deg) translateY(-4px);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: var(--radius-md);
+      box-shadow: var(--card-shadow);
+      transition: box-shadow 0.2s ease;
+      overflow: hidden;
+    }
+
+    .card-scene:hover .card-face {
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    /* ==========================================================================
+       6. CARD FRONT (FACE UP = 1)
+       ========================================================================== */
+    .card-front {
+      background: #ffffff;
+      border: 2px solid #86efac;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(0.35rem, 1.1vw, 0.65rem);
+    }
+
+    .dots-area {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 2px;
+    }
+
+    .dot-matrix {
+      display: grid;
+      width: 100%;
+      height: 100%;
+      place-items: center;
+      gap: 2px;
+    }
+
+    .dot {
+      background-color: #052e16;
+      border-radius: 50%;
+      display: block;
+      box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.25);
+    }
+
+    /* Dot grid layouts for powers of 2: 1, 2, 4, 8, 16 */
+    .dots-1 { grid-template-columns: 1fr; }
+    .dots-1 .dot { width: 34%; max-width: 34px; aspect-ratio: 1; }
+
+    .dots-2 { grid-template-columns: 1fr; grid-template-rows: repeat(2, 1fr); }
+    .dots-2 .dot { width: 28%; max-width: 28px; aspect-ratio: 1; }
+
+    .dots-4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
+    .dots-4 .dot { width: 46%; max-width: 24px; aspect-ratio: 1; }
+
+    .dots-8 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); }
+    .dots-8 .dot { width: 38%; max-width: 18px; aspect-ratio: 1; }
+
+    .dots-16 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
+    .dots-16 .dot { width: 58%; max-width: 14px; aspect-ratio: 1; }
+
+    /* Card Value Label at bottom of front face */
+    .card-value-label {
+      border-top: 1px solid #dcfce7;
+      padding-top: 0.3rem;
+      margin-top: 0.25rem;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: clamp(0.85rem, 1.7vw, 1.2rem);
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.1;
+    }
+
+    /* ==========================================================================
+       7. CARD BACK (FACE DOWN = 0) - FOREST/EMERALD PATTERN
+       ========================================================================== */
+    .card-back {
+      transform: rotateY(180deg);
+      background-color: #14532d;
+      border: 4px solid #ffffff;
+      outline: 2px solid #86efac;
+      outline-offset: -2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-image:
+        repeating-linear-gradient(
+          45deg,
+          rgba(255, 255, 255, 0.11) 0px,
+          rgba(255, 255, 255, 0.11) 4px,
+          transparent 4px,
+          transparent 10px
+        ),
+        repeating-linear-gradient(
+          -45deg,
+          rgba(255, 255, 255, 0.11) 0px,
+          rgba(255, 255, 255, 0.11) 4px,
+          transparent 4px,
+          transparent 10px
+        ),
+        radial-gradient(circle at center, #15803d 0%, #052e16 100%);
+    }
+
+    .card-back-emblem {
+      width: 54%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.14);
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: clamp(0.75rem, 1.4vw, 1rem);
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    /* ==========================================================================
+       8. BIT INDICATOR BADGE UNDERNEATH EACH CARD
+       ========================================================================== */
+    .bit-badge {
+      font-family: var(--font-mono);
+      font-size: clamp(1.05rem, 2vw, 1.35rem);
+      font-weight: 800;
+      width: 2.3rem;
+      height: 2.3rem;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--border-medium);
+      background-color: var(--bg-subtle);
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .bit-badge.is-one {
+      background-color: var(--brand-green);
+      border-color: var(--brand-green-dark);
+      color: #ffffff;
+      box-shadow: 0 3px 8px rgba(21, 128, 61, 0.32);
+    }
+
+    .key-hint {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #6b7280;
+    }
+
+    /* ==========================================================================
+       9. READOUT DASHBOARD (BINARY, DECIMAL, AND LOWERCASE LETTER OUTPUT)
+       ========================================================================== */
+    .readout-panel {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      justify-content: center;
+      gap: 1rem;
+      border-top: 1px solid #dcfce7;
+      padding-top: 1.35rem;
+    }
+
+    .readout-box {
+      flex: 1 1 200px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 0.9rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 112px;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .readout-box.letter-box {
+      flex: 1.5 1 290px;
+      background: #ecfdf5;
+      border: 2px solid #6ee7b7;
+    }
+
+    .readout-box.letter-box.is-invalid {
+      background: var(--warn-bg);
+      border-color: var(--warn-border);
+    }
+
+    .readout-title {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      margin-bottom: 0.35rem;
+    }
+
+    .readout-box.letter-box.is-invalid .readout-title {
+      color: var(--warn-text);
+    }
+
+    .readout-value {
+      font-family: var(--font-mono);
+      font-size: clamp(1.5rem, 3vw, 2.05rem);
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: 0.08em;
+      line-height: 1.2;
+    }
+
+    .readout-value.decimal-val {
+      color: var(--brand-green);
+      letter-spacing: normal;
+    }
+
+    /* Lowercase Letter Display */
+    .letter-output {
+      font-family: var(--font-mono);
+      font-size: clamp(2.1rem, 4vw, 2.85rem);
+      font-weight: 800;
+      color: var(--brand-green-dark);
+      line-height: 1.15;
+      min-height: 3.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .letter-output.is-empty {
+      width: 3.2rem;
+      height: 3.1rem;
+      border: 2px dashed #86efac;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .letter-output.is-error-text {
+      font-family: var(--font-sans);
+      font-size: clamp(0.95rem, 1.8vw, 1.12rem);
+      font-weight: 700;
+      color: var(--warn-text);
+      line-height: 1.35;
+      padding: 0 0.35rem;
+    }
+
+    .letter-subtext {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+      min-height: 1.1rem;
+    }
+
+    /* ==========================================================================
+       10. FOOTER NOTE
+       ========================================================================== */
+    .footer-note {
+      text-align: center;
+      font-size: 0.82rem;
+      color: #d1fae5;
+    }
+
+    .footer-note code {
+      background: rgba(255, 255, 255, 0.14);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      color: #ffffff;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 0.9rem 0.65rem 1.8rem;
+      }
+      .toolbar {
+        justify-content: center;
+        padding: 0.75rem;
+      }
+      .stage-wrapper {
+        padding: 1.25rem 0.75rem 1.4rem;
+      }
+      .cards-grid {
+        gap: 0.45rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-container">
+    <!-- Header -->
+    <header class="app-header" id="app-header">
+      <h1>Binary Letters Decoder</h1>
+      <p>Flip the 5 binary cards to represent a number from <strong>1</strong> to <strong>25</strong> and reveal its lowercase letter (<strong>a</strong>–<strong>y</strong>).</p>
+    </header>
+
+    <!-- Controls Toolbar -->
+    <section class="toolbar" aria-label="Binary Letters Controls" id="toolbar">
+      <div class="control-group">
+        <button type="button" id="btn-all-off" title="Set all 5 cards to 0">Flip All Off (0)</button>
+        <button type="button" class="btn-primary" id="btn-random-letter" title="Pick a random lowercase letter from a to y">Random Letter</button>
+      </div>
+
+      <div class="control-group">
+        <label class="toggle-pill">
+          <input type="checkbox" id="chk-show-decimal" checked />
+          Show Decimal Value
+        </label>
+        <label class="toggle-pill">
+          <input type="checkbox" id="chk-show-reference" />
+          Alphabet Code Reference (1–25)
+        </label>
+        <label class="toggle-pill" id="toggle-challenge-pill">
+          <input type="checkbox" id="chk-challenge-mode" />
+          🎯 Target Letter
+        </label>
+      </div>
+    </section>
+
+    <!-- Target Letter Challenge Banner -->
+    <section class="challenge-bar hidden" id="challenge-bar" aria-live="polite">
+      <div class="challenge-prompt">
+        <span id="challenge-status-icon" aria-hidden="true">🎯</span>
+        <span>Target Letter:</span>
+        <span class="target-letter-badge" id="target-letter-display">a</span>
+        <span class="challenge-feedback" id="challenge-feedback"></span>
+      </div>
+      <div class="control-group">
+        <span class="streak-badge" id="streak-badge">Solved: 0</span>
+        <button type="button" class="btn-primary" id="btn-new-target">New Letter</button>
+      </div>
+    </section>
+
+    <!-- Collapsible Alphabet Reference Drawer -->
+    <section class="reference-drawer hidden" id="reference-drawer" aria-label="Alphabet Code Reference">
+      <div class="reference-header">
+        <span>Alphabet Code Reference (Click any letter to set the cards)</span>
+        <span>0 = empty &nbsp;|&nbsp; 26–31 = out of range</span>
+      </div>
+      <div class="alphabet-grid" id="alphabet-grid">
+        <!-- Populated dynamically for 1=a through 25=y -->
+      </div>
+    </section>
+
+    <!-- Interactive 5-Card Stage -->
+    <section class="stage-wrapper" aria-label="Five Binary Cards Stage">
+      <div class="cards-grid" id="cards-grid" role="group" aria-label="Five binary bit cards">
+        <!-- 5 Cards (16, 8, 4, 2, 1) dynamically rendered here -->
+      </div>
+
+      <!-- Binary, Decimal, and Letter Output Readouts -->
+      <div class="readout-panel">
+        <div class="readout-box">
+          <span class="readout-title">5-Bit Binary</span>
+          <span class="readout-value" id="binary-readout" aria-live="polite">00000</span>
+        </div>
+
+        <div class="readout-box" id="decimal-readout-box">
+          <span class="readout-title">Decimal Number</span>
+          <span class="readout-value decimal-val" id="decimal-readout" aria-live="polite">0</span>
+        </div>
+
+        <div class="readout-box letter-box" id="letter-readout-box">
+          <span class="readout-title">Decoded Letter</span>
+          <div class="letter-output is-empty" id="letter-output" aria-live="polite"></div>
+          <div class="letter-subtext" id="letter-subtext">(empty / nothing)</div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer-note" id="footer-note">
+      Tip: Click any card or press keys <code>1</code>–<code>5</code> on your keyboard to flip bits. Supports URL params like <code>?value=8&amp;hide_decimal=true&amp;embed=true</code>.
+    </footer>
+  </main>
+
+  <script>
+    /**
+     * Binary Letters Interactive (5-Bit Lowercase Letter Decoder)
+     * - 5 fixed cards: 16, 8, 4, 2, 1
+     * - 0 => nothing / empty
+     * - 1..25 => 'a'..'y'
+     * - > 25 (26..31) => "not a lower case letter between 'a' and 'z'"
+     */
+    (function () {
+      "use strict";
+
+      // =========================================================================
+      // 1. PARSE OPTIONAL URL QUERY PARAMETERS
+      // =========================================================================
+      const params = new URLSearchParams(window.location.search);
+
+      function parseBoolParam(name, defaultVal) {
+        if (!params.has(name)) return defaultVal;
+        const val = params.get(name).toLowerCase();
+        return val === "true" || val === "1" || val === "yes";
+      }
+
+      const hideDecimalParam = parseBoolParam("hide_decimal", false);
+      const embedParam = parseBoolParam("embed", false);
+      const showRefParam = parseBoolParam("show_ref", false);
+      const challengeParam = parseBoolParam("challenge", false);
+      const initialValueParam = params.has("value")
+        ? Math.max(0, Math.min(31, parseInt(params.get("value"), 10) || 0))
+        : 0;
+
+      // =========================================================================
+      // 2. APPLICATION STATE (5 FIXED CARDS: 16, 8, 4, 2, 1)
+      // =========================================================================
+      const NUM_CARDS = 5;
+      const PLACE_VALUES = [16, 8, 4, 2, 1];
+
+      const state = {
+        bits: [false, false, false, false, false],
+        showDecimal: !hideDecimalParam,
+        showReference: showRefParam,
+        challengeMode: challengeParam,
+        targetValue: 1, // 1..25 ('a'..'y')
+        targetSolved: false,
+        solvedCount: 0
+      };
+
+      // =========================================================================
+      // 3. DOM REFERENCES
+      // =========================================================================
+      const cardsGrid = document.getElementById("cards-grid");
+      const btnAllOff = document.getElementById("btn-all-off");
+      const btnRandomLetter = document.getElementById("btn-random-letter");
+      const chkShowDecimal = document.getElementById("chk-show-decimal");
+      const chkShowReference = document.getElementById("chk-show-reference");
+      const chkChallengeMode = document.getElementById("chk-challenge-mode");
+      const challengeBar = document.getElementById("challenge-bar");
+      const challengeStatusIcon = document.getElementById("challenge-status-icon");
+      const targetLetterDisplay = document.getElementById("target-letter-display");
+      const challengeFeedback = document.getElementById("challenge-feedback");
+      const streakBadge = document.getElementById("streak-badge");
+      const btnNewTarget = document.getElementById("btn-new-target");
+      const referenceDrawer = document.getElementById("reference-drawer");
+      const alphabetGrid = document.getElementById("alphabet-grid");
+
+      const binaryReadout = document.getElementById("binary-readout");
+      const decimalReadout = document.getElementById("decimal-readout");
+      const decimalReadoutBox = document.getElementById("decimal-readout-box");
+      const letterReadoutBox = document.getElementById("letter-readout-box");
+      const letterOutput = document.getElementById("letter-output");
+      const letterSubtext = document.getElementById("letter-subtext");
+
+      // =========================================================================
+      // 4. INITIALIZE UI FROM PARAMETERS
+      // =========================================================================
+      chkShowDecimal.checked = state.showDecimal;
+      chkShowReference.checked = state.showReference;
+      chkChallengeMode.checked = state.challengeMode;
+      referenceDrawer.classList.toggle("hidden", !state.showReference);
+      challengeBar.classList.toggle("hidden", !state.challengeMode);
+
+      if (embedParam) {
+        document.getElementById("app-header").classList.add("hidden");
+        document.getElementById("footer-note").classList.add("hidden");
+      }
+
+      function setBitsFromDecimal(decimalVal) {
+        const clamped = Math.max(0, Math.min(31, Math.floor(decimalVal)));
+        for (let i = 0; i < NUM_CARDS; i++) {
+          state.bits[i] = Boolean(clamped & PLACE_VALUES[i]);
+        }
+      }
+
+      function calculateDecimalTotal() {
+        let sum = 0;
+        for (let i = 0; i < NUM_CARDS; i++) {
+          if (state.bits[i]) {
+            sum += PLACE_VALUES[i];
+          }
+        }
+        return sum;
+      }
+
+      function generateNewTargetLetter() {
+        const currentTotal = calculateDecimalTotal();
+        const prevTarget = state.targetValue;
+        let nextTarget = Math.floor(Math.random() * 25) + 1; // 1..25 ('a'..'y')
+
+        // Avoid picking the exact same target or one that is already matched on the cards
+        let guard = 0;
+        while ((nextTarget === prevTarget || nextTarget === currentTotal) && guard < 20) {
+          nextTarget = Math.floor(Math.random() * 25) + 1;
+          guard++;
+        }
+
+        state.targetValue = nextTarget;
+        state.targetSolved = false;
+        updateReadouts();
+      }
+
+      if (initialValueParam > 0) {
+        setBitsFromDecimal(initialValueParam);
+      }
+
+      if (state.challengeMode) {
+        generateNewTargetLetter();
+      }
+
+      // =========================================================================
+      // 5. BUILD ALPHABET REFERENCE GRID (1 = a ... 25 = y)
+      // =========================================================================
+      function buildAlphabetReference() {
+        alphabetGrid.innerHTML = "";
+        for (let n = 1; n <= 25; n++) {
+          const letter = String.fromCharCode(96 + n);
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "alpha-cell";
+          cell.dataset.num = String(n);
+          cell.setAttribute("aria-label", `Set cards to ${n} for letter ${letter}`);
+
+          const letterSpan = document.createElement("span");
+          letterSpan.className = "alpha-letter";
+          letterSpan.textContent = letter;
+
+          const numSpan = document.createElement("span");
+          numSpan.className = "alpha-num";
+          numSpan.textContent = String(n);
+
+          cell.appendChild(letterSpan);
+          cell.appendChild(numSpan);
+
+          cell.addEventListener("click", () => {
+            setBitsFromDecimal(n);
+            syncCardStates();
+          });
+
+          alphabetGrid.appendChild(cell);
+        }
+      }
+
+      // =========================================================================
+      // 6. BUILD 5 BINARY CARDS DOM
+      // =========================================================================
+      function buildCardsDOM() {
+        cardsGrid.innerHTML = "";
+
+        for (let i = 0; i < NUM_CARDS; i++) {
+          const placeValue = PLACE_VALUES[i];
+          const isOn = state.bits[i];
+
+          const slot = document.createElement("div");
+          slot.className = "card-slot";
+
+          // Interactive 3D Card Scene
+          const scene = document.createElement("div");
+          scene.className = "card-scene" + (isOn ? "" : " is-off");
+          scene.setAttribute("role", "switch");
+          scene.setAttribute("tabindex", "0");
+          scene.setAttribute("aria-checked", String(isOn));
+          scene.setAttribute(
+            "aria-label",
+            `Card value ${placeValue}, currently ${isOn ? "face up (1)" : "face down (0)"}`
+          );
+
+          const inner = document.createElement("div");
+          inner.className = "card-inner";
+
+          // Card Front (Dots + Place Value)
+          const front = document.createElement("div");
+          front.className = "card-face card-front";
+
+          const dotsArea = document.createElement("div");
+          dotsArea.className = "dots-area";
+
+          const dotMatrix = document.createElement("div");
+          dotMatrix.className = `dot-matrix dots-${placeValue}`;
+          dotMatrix.setAttribute("aria-hidden", "true");
+
+          for (let d = 0; d < placeValue; d++) {
+            const dot = document.createElement("span");
+            dot.className = "dot";
+            dotMatrix.appendChild(dot);
+          }
+
+          dotsArea.appendChild(dotMatrix);
+
+          const label = document.createElement("div");
+          label.className = "card-value-label";
+          label.textContent = String(placeValue);
+
+          front.appendChild(dotsArea);
+          front.appendChild(label);
+
+          // Card Back (Green patterned back)
+          const back = document.createElement("div");
+          back.className = "card-face card-back";
+          back.setAttribute("aria-hidden", "true");
+
+          const emblem = document.createElement("div");
+          emblem.className = "card-back-emblem";
+          emblem.textContent = "0";
+          back.appendChild(emblem);
+
+          inner.appendChild(front);
+          inner.appendChild(back);
+          scene.appendChild(inner);
+
+          // Bit indicator badge underneath
+          const badge = document.createElement("div");
+          badge.className = "bit-badge" + (isOn ? " is-one" : "");
+          badge.textContent = isOn ? "1" : "0";
+          badge.setAttribute("aria-hidden", "true");
+
+          // Keyboard shortcut hint
+          const keyHint = document.createElement("span");
+          keyHint.className = "key-hint";
+          keyHint.textContent = `Key ${i + 1}`;
+          keyHint.setAttribute("aria-hidden", "true");
+
+          scene.addEventListener("click", () => toggleCard(i));
+          scene.addEventListener("keydown", (e) => {
+            if (e.key === " " || e.key === "Enter") {
+              e.preventDefault();
+              toggleCard(i);
+            }
+          });
+
+          slot.appendChild(scene);
+          slot.appendChild(badge);
+          slot.appendChild(keyHint);
+          cardsGrid.appendChild(slot);
+        }
+
+        updateReadouts();
+      }
+
+      // =========================================================================
+      // 7. SYNC CARD STATES & UPDATE LETTER DECODER READOUTS
+      // =========================================================================
+      function syncCardStates() {
+        const scenes = cardsGrid.querySelectorAll(".card-scene");
+        const badges = cardsGrid.querySelectorAll(".bit-badge");
+
+        scenes.forEach((scene, i) => {
+          const isOn = state.bits[i];
+          const placeValue = PLACE_VALUES[i];
+
+          scene.classList.toggle("is-off", !isOn);
+          scene.setAttribute("aria-checked", String(isOn));
+          scene.setAttribute(
+            "aria-label",
+            `Card value ${placeValue}, currently ${isOn ? "face up (1)" : "face down (0)"}`
+          );
+
+          if (badges[i]) {
+            badges[i].textContent = isOn ? "1" : "0";
+            badges[i].classList.toggle("is-one", isOn);
+          }
+        });
+
+        updateReadouts();
+      }
+
+      function updateReadouts() {
+        const binaryStr = state.bits.map((b) => (b ? "1" : "0")).join("");
+        const total = calculateDecimalTotal();
+
+        binaryReadout.textContent = binaryStr;
+        decimalReadout.textContent = String(total);
+        decimalReadoutBox.classList.toggle("hidden", !state.showDecimal);
+
+        // Reset letter box visual modifiers
+        letterReadoutBox.classList.remove("is-invalid");
+        letterOutput.classList.remove("is-empty", "is-error-text");
+
+        if (total === 0) {
+          // Rule: 0 is nothing
+          letterOutput.textContent = "";
+          letterOutput.classList.add("is-empty");
+          letterSubtext.textContent = "(empty / nothing)";
+        } else if (total >= 1 && total <= 25) {
+          // Rule: 1 = 'a', 2 = 'b', ..., 25 = 'y' (lowercase only)
+          const letter = String.fromCharCode(96 + total);
+          letterOutput.textContent = letter;
+          letterSubtext.textContent = state.showDecimal
+            ? `Letter #${total} in the alphabet`
+            : "Lowercase letter";
+        } else {
+          // Rule: > 25 displays exact out-of-range message
+          letterReadoutBox.classList.add("is-invalid");
+          letterOutput.classList.add("is-error-text");
+          letterOutput.textContent = "not a lower case letter between 'a' and 'z'";
+          letterSubtext.textContent = state.showDecimal ? `Value ${total} is greater than 25` : "";
+        }
+
+        // Highlight matching cell in Alphabet Reference if open
+        const alphaCells = alphabetGrid.querySelectorAll(".alpha-cell");
+        alphaCells.forEach((cell) => {
+          const cellNum = parseInt(cell.dataset.num, 10);
+          cell.classList.toggle("active-match", cellNum === total);
+        });
+
+        // Target Letter Challenge Mode Evaluation
+        if (state.challengeMode) {
+          const targetChar = String.fromCharCode(96 + state.targetValue);
+          targetLetterDisplay.textContent = `'${targetChar}'`;
+
+          const isMatch = total === state.targetValue;
+          if (isMatch && !state.targetSolved) {
+            state.targetSolved = true;
+            state.solvedCount += 1;
+          }
+
+          challengeBar.classList.toggle("solved", isMatch);
+          streakBadge.textContent = `Solved: ${state.solvedCount}`;
+
+          if (isMatch) {
+            challengeStatusIcon.textContent = "✅";
+            challengeFeedback.textContent = state.showDecimal
+              ? `Matched '${targetChar}' (${binaryStr} = ${total})!`
+              : `Matched '${targetChar}' (${binaryStr})!`;
+            btnNewTarget.textContent = "Next Letter →";
+          } else {
+            challengeStatusIcon.textContent = "🎯";
+            challengeFeedback.textContent = state.targetSolved
+              ? "Solved! Click Next Letter for a new challenge."
+              : "Flip the cards to make this letter.";
+            btnNewTarget.textContent = "New Letter";
+          }
+        }
+      }
+
+      // =========================================================================
+      // 8. EVENT HANDLERS
+      // =========================================================================
+      function toggleCard(index) {
+        state.bits[index] = !state.bits[index];
+        syncCardStates();
+      }
+
+      btnAllOff.addEventListener("click", () => {
+        state.bits.fill(false);
+        syncCardStates();
+      });
+
+      btnRandomLetter.addEventListener("click", () => {
+        const current = calculateDecimalTotal();
+        let nextNum = Math.floor(Math.random() * 25) + 1; // 1..25 ('a'..'y')
+        if (nextNum === current) {
+          nextNum = (nextNum % 25) + 1;
+        }
+        setBitsFromDecimal(nextNum);
+        syncCardStates();
+      });
+
+      chkShowDecimal.addEventListener("change", (e) => {
+        state.showDecimal = e.target.checked;
+        updateReadouts();
+      });
+
+      chkShowReference.addEventListener("change", (e) => {
+        state.showReference = e.target.checked;
+        referenceDrawer.classList.toggle("hidden", !state.showReference);
+      });
+
+      chkChallengeMode.addEventListener("change", (e) => {
+        state.challengeMode = e.target.checked;
+        challengeBar.classList.toggle("hidden", !state.challengeMode);
+        if (state.challengeMode) {
+          generateNewTargetLetter();
+        }
+      });
+
+      btnNewTarget.addEventListener("click", () => {
+        generateNewTargetLetter();
+      });
+
+      // Global keyboard shortcuts: keys '1' through '5' toggle cards from left to right
+      document.addEventListener("keydown", (e) => {
+        if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
+          return;
+        }
+        if (e.key >= "1" && e.key <= "5" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          const idx = parseInt(e.key, 10) - 1;
+          toggleCard(idx);
+        }
+      });
+
+      // =========================================================================
+      // 9. INITIALIZE
+      // =========================================================================
+      buildAlphabetReference();
+      buildCardsDOM();
+    })();
+  </script>
+</body>
+</html>

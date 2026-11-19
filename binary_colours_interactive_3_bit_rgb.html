@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3-Bit Binary Colours Interactive</title>
+  <style>
+    /* ==========================================================================
+       1. DESIGN TOKENS & NEUTRAL GREY THEME PALETTE
+       ========================================================================== */
+    :root {
+      --bg-page-top: #374151;       /* Cool slate grey */
+      --bg-page-bottom: #1f2937;    /* Deep neutral charcoal grey */
+      --bg-surface: #f9fafb;        /* Crisp off-white stage card */
+      --bg-panel: #f3f4f6;          /* Soft light grey panel */
+      --bg-pill: #e5e7eb;
+      --border-light: #d1d5db;
+      --border-medium: #9ca3af;
+
+      --text-primary: #111827;
+      --text-secondary: #374151;
+      --text-muted: #6b7280;
+      --text-on-grey: #f9fafb;
+
+      --accent-dark: #1f2937;
+      --accent-dark-hover: #111827;
+
+      --card-shadow: 0 12px 24px -6px rgba(17, 24, 39, 0.25), 0 4px 10px -2px rgba(17, 24, 39, 0.14);
+      --card-shadow-hover: 0 18px 32px -6px rgba(17, 24, 39, 0.34), 0 8px 14px -3px rgba(17, 24, 39, 0.18);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: linear-gradient(160deg, var(--bg-page-top) 0%, var(--bg-page-bottom) 100%);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem 2.5rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ==========================================================================
+       2. LAYOUT & HEADER
+       ========================================================================== */
+    .app-container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .app-header {
+      text-align: center;
+      color: var(--text-on-grey);
+      padding: 0.25rem 0;
+    }
+
+    .app-header h1 {
+      font-size: clamp(1.45rem, 2.8vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .app-header p {
+      font-size: 0.95rem;
+      color: #d1d5db;
+      margin-top: 0.3rem;
+    }
+
+    /* ==========================================================================
+       3. CONTROL BAR & TOGGLES
+       ========================================================================== */
+    .toolbar {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 0.85rem 1.15rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    }
+
+    .control-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      padding: 0.48rem 0.9rem;
+      cursor: pointer;
+      border: 1px solid var(--border-medium);
+      background-color: var(--bg-panel);
+      color: var(--text-primary);
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      user-select: none;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: var(--bg-pill);
+      border-color: var(--text-secondary);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:focus-visible, .toggle-pill:focus-within {
+      outline: 3px solid rgba(156, 163, 175, 0.65);
+      outline-offset: 2px;
+    }
+
+    button.btn-primary {
+      background-color: var(--accent-dark);
+      border-color: var(--accent-dark);
+      color: #ffffff;
+    }
+
+    button.btn-primary:hover:not(:disabled) {
+      background-color: var(--accent-dark-hover);
+      border-color: var(--accent-dark-hover);
+    }
+
+    .toggle-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-panel);
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease;
+    }
+
+    .toggle-pill:hover {
+      background: var(--bg-pill);
+    }
+
+    .toggle-pill input[type="checkbox"] {
+      accent-color: var(--accent-dark);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ==========================================================================
+       4. TARGET COLOUR CHALLENGE BANNER
+       ========================================================================== */
+    .challenge-bar {
+      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+      border: 2px solid #9ca3af;
+      border-radius: var(--radius-lg);
+      padding: 0.9rem 1.2rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+      transition: background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .challenge-bar.solved {
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      border-color: #16a34a;
+    }
+
+    .challenge-prompt {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .challenge-bar.solved .challenge-prompt {
+      color: #14532d;
+    }
+
+    .target-colour-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-sans);
+      font-size: 1.15rem;
+      font-weight: 800;
+      background: #ffffff;
+      color: #111827;
+      padding: 0.22rem 0.75rem 0.22rem 0.45rem;
+      border-radius: var(--radius-sm);
+      border: 2px solid #6b7280;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+      line-height: 1.25;
+    }
+
+    .challenge-bar.solved .target-colour-badge {
+      border-color: #22c55e;
+    }
+
+    .target-mini-swatch {
+      width: 1.35rem;
+      height: 1.35rem;
+      border-radius: 4px;
+      border: 1.5px solid #4b5563;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .challenge-feedback {
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .streak-badge {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 800;
+      background: #ffffff;
+      color: #1f2937;
+      border: 1px solid var(--border-medium);
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+    }
+
+    .challenge-bar.solved .streak-badge {
+      border-color: #22c55e;
+      color: #15803d;
+    }
+
+    /* ==========================================================================
+       5. 3-BIT COLOUR REFERENCE CHART (COLLAPSIBLE)
+       ========================================================================== */
+    .reference-drawer {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.15rem;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+    }
+
+    .reference-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.7rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .colour-ref-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+      gap: 0.55rem;
+    }
+
+    .ref-cell {
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 0.45rem 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .ref-cell:hover {
+      background: var(--bg-pill);
+      border-color: #4b5563;
+      transform: translateY(-1px);
+    }
+
+    .ref-cell.active-match {
+      background: #1f2937;
+      border-color: #111827;
+      color: #ffffff;
+    }
+
+    .ref-swatch {
+      width: 100%;
+      height: 22px;
+      border-radius: 4px;
+      border: 1.5px solid #6b7280;
+    }
+
+    .ref-cell.active-match .ref-swatch {
+      border-color: #d1d5db;
+    }
+
+    .ref-name {
+      font-size: 0.85rem;
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .ref-bits {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+
+    /* ==========================================================================
+       6. BINARY CARDS STAGE & 3D FLIP MECHANICS
+       ========================================================================== */
+    .stage-wrapper {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-xl);
+      padding: 1.85rem 1.25rem 1.85rem;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.6rem;
+    }
+
+    .cards-grid {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: clamp(0.85rem, 3.2vw, 2.2rem);
+      width: 100%;
+      padding: 0.25rem;
+    }
+
+    /* Individual card column (Channel Header + Card + Bit Indicator) */
+    .card-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.65rem;
+      flex: 0 1 172px;
+      min-width: 88px;
+    }
+
+    .channel-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border-light);
+      color: var(--text-primary);
+    }
+
+    .channel-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid rgba(0, 0, 0, 0.25);
+    }
+
+    /* 3D Perspective Container */
+    .card-scene {
+      width: 100%;
+      aspect-ratio: 2.5 / 3.5;
+      perspective: 1000px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      border-radius: var(--radius-md);
+    }
+
+    .card-scene:focus-visible {
+      outline: 3px solid #4b5563;
+      outline-offset: 4px;
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-style: preserve-3d;
+    }
+
+    /* When face-down (bit = 0), rotate 180deg to show card back */
+    .card-scene.is-off .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-scene:hover .card-inner {
+      transform: translateY(-4px);
+    }
+
+    .card-scene.is-off:hover .card-inner {
+      transform: rotateY(180deg) translateY(-4px);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: var(--radius-md);
+      box-shadow: var(--card-shadow);
+      transition: box-shadow 0.2s ease, background-color 0.28s ease, color 0.28s ease, border-color 0.28s ease;
+      overflow: hidden;
+    }
+
+    .card-scene:hover .card-face {
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    /* ==========================================================================
+       7. CARD FRONT (FACE UP = 1) — DYNAMICALLY COLOUR-CODED TO MIXED COLOUR
+       ========================================================================== */
+    .card-front {
+      background-color: #ffffff;
+      border: 3px solid #374151;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: clamp(0.55rem, 1.4vw, 0.85rem);
+      text-align: center;
+    }
+
+    .card-front-top {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: clamp(0.75rem, 1.3vw, 0.9rem);
+      font-weight: 800;
+      opacity: 0.9;
+    }
+
+    .card-front-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      padding: 0.25rem;
+    }
+
+    .card-channel-letter {
+      font-family: var(--font-mono);
+      font-size: clamp(2.1rem, 4.4vw, 3.1rem);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .card-mixed-tag {
+      font-size: clamp(0.72rem, 1.25vw, 0.85rem);
+      font-weight: 800;
+      padding: 0.18rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.88);
+      color: #111827;
+      border: 1px solid rgba(17, 24, 39, 0.25);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-front-bottom {
+      width: 100%;
+      border-top: 1px solid currentColor;
+      padding-top: 0.3rem;
+      font-family: var(--font-mono);
+      font-size: clamp(0.75rem, 1.3vw, 0.88rem);
+      font-weight: 800;
+      opacity: 0.9;
+    }
+
+    /* ==========================================================================
+       8. CARD BACK (FACE DOWN = 0) — SLEEK NEUTRAL CHARCOAL GREY PATTERN
+       ========================================================================== */
+    .card-back {
+      transform: rotateY(180deg);
+      background-color: #1f2937;
+      border: 4px solid #ffffff;
+      outline: 2px solid #9ca3af;
+      outline-offset: -2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      background-image:
+        repeating-linear-gradient(
+          45deg,
+          rgba(255, 255, 255, 0.07) 0px,
+          rgba(255, 255, 255, 0.07) 4px,
+          transparent 4px,
+          transparent 10px
+        ),
+        repeating-linear-gradient(
+          -45deg,
+          rgba(255, 255, 255, 0.07) 0px,
+          rgba(255, 255, 255, 0.07) 4px,
+          transparent 4px,
+          transparent 10px
+        ),
+        radial-gradient(circle at center, #374151 0%, #111827 100%);
+    }
+
+    .card-back-emblem {
+      width: 52%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+      font-weight: 800;
+      color: #f3f4f6;
+    }
+
+    .card-back-sub {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: #d1d5db;
+      text-transform: uppercase;
+    }
+
+    /* ==========================================================================
+       9. BIT INDICATOR BADGE UNDERNEATH EACH CARD
+       ========================================================================== */
+    .bit-badge {
+      font-family: var(--font-mono);
+      font-size: clamp(1.1rem, 2vw, 1.35rem);
+      font-weight: 800;
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--border-medium);
+      background-color: var(--bg-panel);
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .bit-badge.is-one {
+      background-color: #1f2937;
+      border-color: #111827;
+      color: #ffffff;
+      box-shadow: 0 3px 8px rgba(17, 24, 39, 0.28);
+    }
+
+    .key-hint {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       10. READOUT DASHBOARD (3-BIT BINARY & LIVE MIXED COLOUR SWATCH)
+       ========================================================================== */
+    .readout-panel {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      justify-content: center;
+      gap: 1rem;
+      border-top: 1px solid var(--border-light);
+      padding-top: 1.35rem;
+    }
+
+    .readout-box {
+      flex: 1 1 210px;
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 0.95rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 122px;
+    }
+
+    .readout-box.colour-box {
+      flex: 1.6 1 310px;
+      background: #ffffff;
+      border: 2px solid #9ca3af;
+    }
+
+    .readout-title {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      margin-bottom: 0.45rem;
+    }
+
+    .readout-value {
+      font-family: var(--font-mono);
+      font-size: clamp(1.7rem, 3.2vw, 2.25rem);
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: 0.12em;
+      line-height: 1.2;
+    }
+
+    .rgb-breakdown {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-top: 0.35rem;
+    }
+
+    .colour-result-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.9rem;
+      width: 100%;
+    }
+
+    .live-colour-swatch {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius-md);
+      border: 2.5px solid #4b5563;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25), 0 3px 8px rgba(0, 0, 0, 0.14);
+      flex-shrink: 0;
+      transition: background-color 0.25s ease;
+    }
+
+    .colour-text-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .colour-name-output {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 900;
+      color: var(--text-primary);
+      line-height: 1.15;
+    }
+
+    .colour-hex-output {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* ==========================================================================
+       11. FOOTER NOTE
+       ========================================================================== */
+    .footer-note {
+      text-align: center;
+      font-size: 0.82rem;
+      color: #d1d5db;
+    }
+
+    .footer-note code {
+      background: rgba(255, 255, 255, 0.14);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      color: #ffffff;
+    }
+
+    @media (max-width: 560px) {
+      body {
+        padding: 0.9rem 0.65rem 1.8rem;
+      }
+      .toolbar {
+        justify-content: center;
+        padding: 0.75rem;
+      }
+      .stage-wrapper {
+        padding: 1.35rem 0.85rem 1.45rem;
+      }
+      .cards-grid {
+        gap: 0.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-container">
+    <!-- Header -->
+    <header class="app-header" id="app-header">
+      <h1>3-Bit Binary Colours</h1>
+      <p>Flip the <strong>Red</strong>, <strong>Green</strong>, and <strong>Blue</strong> cards to mix all 8 possible 3-bit colours.</p>
+    </header>
+
+    <!-- Controls Toolbar -->
+    <section class="toolbar" aria-label="Binary Colours Controls" id="toolbar">
+      <div class="control-group">
+        <button type="button" id="btn-all-off" title="Turn all RGB channels off (000 = Black)">Flip All Off (000)</button>
+        <button type="button" class="btn-primary" id="btn-random-colour" title="Pick a random 3-bit colour">Random Colour</button>
+      </div>
+
+      <div class="control-group">
+        <label class="toggle-pill">
+          <input type="checkbox" id="chk-show-reference" />
+          Colour Reference (000–111)
+        </label>
+        <label class="toggle-pill" id="toggle-challenge-pill">
+          <input type="checkbox" id="chk-challenge-mode" />
+          🎯 Target Colour
+        </label>
+      </div>
+    </section>
+
+    <!-- Target Colour Challenge Banner -->
+    <section class="challenge-bar hidden" id="challenge-bar" aria-live="polite">
+      <div class="challenge-prompt">
+        <span id="challenge-status-icon" aria-hidden="true">🎯</span>
+        <span>Make the colour:</span>
+        <span class="target-colour-badge">
+          <span class="target-mini-swatch" id="target-mini-swatch" aria-hidden="true"></span>
+          <span id="target-colour-name">Yellow</span>
+        </span>
+        <span class="challenge-feedback" id="challenge-feedback"></span>
+      </div>
+      <div class="control-group">
+        <span class="streak-badge" id="streak-badge">Solved: 0</span>
+        <button type="button" class="btn-primary" id="btn-new-target">New Colour</button>
+      </div>
+    </section>
+
+    <!-- Collapsible 8-Colour Reference Chart -->
+    <section class="reference-drawer hidden" id="reference-drawer" aria-label="3-Bit Colour Reference Chart">
+      <div class="reference-header">
+        <span>3-Bit RGB Colour Table (Click any colour to set the cards)</span>
+        <span>Bits: Red (4) · Green (2) · Blue (1)</span>
+      </div>
+      <div class="colour-ref-grid" id="colour-ref-grid">
+        <!-- Populated dynamically for 000 through 111 -->
+      </div>
+    </section>
+
+    <!-- Interactive 3-Card Stage -->
+    <section class="stage-wrapper" aria-label="Three Binary RGB Cards Stage">
+      <div class="cards-grid" id="cards-grid" role="group" aria-label="Three RGB binary bit cards">
+        <!-- 3 Cards (Red, Green, Blue) dynamically rendered here -->
+      </div>
+
+      <!-- Binary & Live Colour Output Readouts -->
+      <div class="readout-panel">
+        <div class="readout-box">
+          <span class="readout-title">3-Bit Binary</span>
+          <span class="readout-value" id="binary-readout" aria-live="polite">000</span>
+          <span class="rgb-breakdown" id="rgb-breakdown">R: 0 &nbsp;|&nbsp; G: 0 &nbsp;|&nbsp; B: 0</span>
+        </div>
+
+        <div class="readout-box colour-box">
+          <span class="readout-title">Mixed Colour Output</span>
+          <div class="colour-result-row">
+            <div class="live-colour-swatch" id="live-colour-swatch" aria-hidden="true"></div>
+            <div class="colour-text-stack">
+              <div class="colour-name-output" id="colour-name-output" aria-live="polite">Black</div>
+              <div class="colour-hex-output" id="colour-hex-output">#000000 (Decimal: 0)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer-note" id="footer-note">
+      Tip: Click any card or press keys <code>1</code>, <code>2</code>, <code>3</code> (or <code>R</code>, <code>G</code>, <code>B</code>) to flip channels. Supports URL params like <code>?value=6&amp;challenge=true&amp;embed=true</code>.
+    </footer>
+  </main>
+
+  <script>
+    /**
+     * 3-Bit Binary Colours Interactive
+     * - 3 fixed cards from left to right: Red (bit 4), Green (bit 2), Blue (bit 1)
+     * - 8 colours total:
+     *   000 (0) = Black
+     *   001 (1) = Blue
+     *   010 (2) = Green
+     *   011 (3) = Cyan
+     *   100 (4) = Red
+     *   101 (5) = Magenta
+     *   110 (6) = Yellow
+     *   111 (7) = White
+     * - Active (flipped ON) cards dynamically show the resulting mixed colour.
+     */
+    (function () {
+      "use strict";
+
+      // =========================================================================
+      // 1. 3-BIT RGB COLOUR DEFINITIONS & CHANNEL METADATA
+      // =========================================================================
+      const CHANNELS = [
+        { key: "R", name: "Red",   bitWeight: 4, primaryHex: "#ef4444", shortcut: "1 / R" },
+        { key: "G", name: "Green", bitWeight: 2, primaryHex: "#22c55e", shortcut: "2 / G" },
+        { key: "B", name: "Blue",  bitWeight: 1, primaryHex: "#3b82f6", shortcut: "3 / B" }
+      ];
+
+      const COLOURS_3BIT = [
+        { value: 0, bits: "000", name: "Black",   hex: "#000000", lightBg: false },
+        { value: 1, bits: "001", name: "Blue",    hex: "#0000FF", lightBg: false },
+        { value: 2, bits: "010", name: "Green",   hex: "#00FF00", lightBg: true  },
+        { value: 3, bits: "011", name: "Cyan",    hex: "#00FFFF", lightBg: true  },
+        { value: 4, bits: "100", name: "Red",     hex: "#FF0000", lightBg: false },
+        { value: 5, bits: "101", name: "Magenta", hex: "#FF00FF", lightBg: false },
+        { value: 6, bits: "110", name: "Yellow",  hex: "#FFFF00", lightBg: true  },
+        { value: 7, bits: "111", name: "White",   hex: "#FFFFFF", lightBg: true  }
+      ];
+
+      // =========================================================================
+      // 2. PARSE OPTIONAL URL QUERY PARAMETERS
+      // =========================================================================
+      const params = new URLSearchParams(window.location.search);
+
+      function parseBoolParam(name, defaultVal) {
+        if (!params.has(name)) return defaultVal;
+        const val = params.get(name).toLowerCase();
+        return val === "true" || val === "1" || val === "yes";
+      }
+
+      const embedParam = parseBoolParam("embed", false);
+      const showRefParam = parseBoolParam("show_ref", false);
+      const challengeParam = parseBoolParam("challenge", false);
+      const initialValueParam = params.has("value")
+        ? Math.max(0, Math.min(7, parseInt(params.get("value"), 10) || 0))
+        : 0;
+
+      // =========================================================================
+      // 3. APPLICATION STATE
+      // =========================================================================
+      const state = {
+        bits: [false, false, false], // [Red, Green, Blue]
+        showReference: showRefParam,
+        challengeMode: challengeParam,
+        targetValue: 6, // Default target: Yellow (110)
+        targetSolved: false,
+        solvedCount: 0
+      };
+
+      // =========================================================================
+      // 4. DOM REFERENCES
+      // =========================================================================
+      const cardsGrid = document.getElementById("cards-grid");
+      const btnAllOff = document.getElementById("btn-all-off");
+      const btnRandomColour = document.getElementById("btn-random-colour");
+      const chkShowReference = document.getElementById("chk-show-reference");
+      const chkChallengeMode = document.getElementById("chk-challenge-mode");
+
+      const challengeBar = document.getElementById("challenge-bar");
+      const challengeStatusIcon = document.getElementById("challenge-status-icon");
+      const targetMiniSwatch = document.getElementById("target-mini-swatch");
+      const targetColourName = document.getElementById("target-colour-name");
+      const challengeFeedback = document.getElementById("challenge-feedback");
+      const streakBadge = document.getElementById("streak-badge");
+      const btnNewTarget = document.getElementById("btn-new-target");
+
+      const referenceDrawer = document.getElementById("reference-drawer");
+      const colourRefGrid = document.getElementById("colour-ref-grid");
+
+      const binaryReadout = document.getElementById("binary-readout");
+      const rgbBreakdown = document.getElementById("rgb-breakdown");
+      const liveColourSwatch = document.getElementById("live-colour-swatch");
+      const colourNameOutput = document.getElementById("colour-name-output");
+      const colourHexOutput = document.getElementById("colour-hex-output");
+
+      // =========================================================================
+      // 5. STATE & COLOUR HELPERS
+      // =========================================================================
+      function getCurrentValue() {
+        return (state.bits[0] ? 4 : 0) + (state.bits[1] ? 2 : 0) + (state.bits[2] ? 1 : 0);
+      }
+
+      function setBitsFromValue(val) {
+        const clamped = Math.max(0, Math.min(7, Math.floor(val)));
+        state.bits[0] = Boolean(clamped & 4);
+        state.bits[1] = Boolean(clamped & 2);
+        state.bits[2] = Boolean(clamped & 1);
+      }
+
+      function generateNewTargetColour() {
+        const currentVal = getCurrentValue();
+        const prevTarget = state.targetValue;
+        let nextTarget = Math.floor(Math.random() * 8); // 0..7 (all 8 colours)
+
+        let guard = 0;
+        while ((nextTarget === prevTarget || nextTarget === currentVal) && guard < 20) {
+          nextTarget = Math.floor(Math.random() * 8);
+          guard++;
+        }
+
+        state.targetValue = nextTarget;
+        state.targetSolved = false;
+        updateUI();
+      }
+
+      // Apply initial parameters
+      chkShowReference.checked = state.showReference;
+      chkChallengeMode.checked = state.challengeMode;
+      referenceDrawer.classList.toggle("hidden", !state.showReference);
+      challengeBar.classList.toggle("hidden", !state.challengeMode);
+
+      if (embedParam) {
+        document.getElementById("app-header").classList.add("hidden");
+        document.getElementById("footer-note").classList.add("hidden");
+      }
+
+      if (initialValueParam > 0) {
+        setBitsFromValue(initialValueParam);
+      }
+
+      if (state.challengeMode) {
+        generateNewTargetColour();
+      }
+
+      // =========================================================================
+      // 6. BUILD 8-COLOUR REFERENCE CHART
+      // =========================================================================
+      function buildColourReference() {
+        colourRefGrid.innerHTML = "";
+        COLOURS_3BIT.forEach((entry) => {
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "ref-cell";
+          cell.dataset.value = String(entry.value);
+          cell.setAttribute("aria-label", `Set cards to ${entry.bits} for ${entry.name}`);
+
+          const swatch = document.createElement("span");
+          swatch.className = "ref-swatch";
+          swatch.style.backgroundColor = entry.hex;
+
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "ref-name";
+          nameSpan.textContent = entry.name;
+
+          const bitsSpan = document.createElement("span");
+          bitsSpan.className = "ref-bits";
+          bitsSpan.textContent = `${entry.bits} (${entry.value})`;
+
+          cell.appendChild(swatch);
+          cell.appendChild(nameSpan);
+          cell.appendChild(bitsSpan);
+
+          cell.addEventListener("click", () => {
+            setBitsFromValue(entry.value);
+            updateUI();
+          });
+
+          colourRefGrid.appendChild(cell);
+        });
+      }
+
+      // =========================================================================
+      // 7. BUILD 3 RGB BINARY CARDS DOM
+      // =========================================================================
+      function buildCardsDOM() {
+        cardsGrid.innerHTML = "";
+
+        CHANNELS.forEach((ch, i) => {
+          const isOn = state.bits[i];
+
+          const slot = document.createElement("div");
+          slot.className = "card-slot";
+
+          // Persistent Channel Pill Header above each card
+          const pill = document.createElement("div");
+          pill.className = "channel-pill";
+
+          const dot = document.createElement("span");
+          dot.className = "channel-dot";
+          dot.style.backgroundColor = ch.primaryHex;
+
+          const pillText = document.createElement("span");
+          pillText.textContent = ch.name;
+
+          pill.appendChild(dot);
+          pill.appendChild(pillText);
+
+          // Interactive 3D Card Scene
+          const scene = document.createElement("div");
+          scene.className = "card-scene" + (isOn ? "" : " is-off");
+          scene.setAttribute("role", "switch");
+          scene.setAttribute("tabindex", "0");
+          scene.setAttribute("aria-checked", String(isOn));
+
+          const inner = document.createElement("div");
+          inner.className = "card-inner";
+
+          // Card Front (Dynamically coloured with the mixed RGB colour!)
+          const front = document.createElement("div");
+          front.className = "card-face card-front";
+
+          const frontTop = document.createElement("div");
+          frontTop.className = "card-front-top";
+          frontTop.innerHTML = `<span>${ch.name.toUpperCase()}</span><span>ON</span>`;
+
+          const frontCenter = document.createElement("div");
+          frontCenter.className = "card-front-center";
+
+          const letterDiv = document.createElement("div");
+          letterDiv.className = "card-channel-letter";
+          letterDiv.textContent = ch.key;
+
+          const mixedTag = document.createElement("div");
+          mixedTag.className = "card-mixed-tag";
+          mixedTag.textContent = "Black";
+
+          frontCenter.appendChild(letterDiv);
+          frontCenter.appendChild(mixedTag);
+
+          const frontBottom = document.createElement("div");
+          frontBottom.className = "card-front-bottom";
+          frontBottom.textContent = `Bit value: ${ch.bitWeight}`;
+
+          front.appendChild(frontTop);
+          front.appendChild(frontCenter);
+          front.appendChild(frontBottom);
+
+          // Card Back (OFF / 0 state)
+          const back = document.createElement("div");
+          back.className = "card-face card-back";
+          back.setAttribute("aria-hidden", "true");
+
+          const emblem = document.createElement("div");
+          emblem.className = "card-back-emblem";
+          emblem.textContent = "0";
+
+          const backSub = document.createElement("div");
+          backSub.className = "card-back-sub";
+          backSub.textContent = `${ch.name} Off`;
+
+          back.appendChild(emblem);
+          back.appendChild(backSub);
+
+          inner.appendChild(front);
+          inner.appendChild(back);
+          scene.appendChild(inner);
+
+          // Bit indicator badge underneath
+          const badge = document.createElement("div");
+          badge.className = "bit-badge" + (isOn ? " is-one" : "");
+          badge.textContent = isOn ? "1" : "0";
+          badge.setAttribute("aria-hidden", "true");
+
+          // Keyboard shortcut hint
+          const keyHint = document.createElement("span");
+          keyHint.className = "key-hint";
+          keyHint.textContent = `Key ${ch.shortcut}`;
+          keyHint.setAttribute("aria-hidden", "true");
+
+          scene.addEventListener("click", () => toggleCard(i));
+          scene.addEventListener("keydown", (e) => {
+            if (e.key === " " || e.key === "Enter") {
+              e.preventDefault();
+              toggleCard(i);
+            }
+          });
+
+          slot.appendChild(pill);
+          slot.appendChild(scene);
+          slot.appendChild(badge);
+          slot.appendChild(keyHint);
+          cardsGrid.appendChild(slot);
+        });
+
+        updateUI();
+      }
+
+      // =========================================================================
+      // 8. SYNC CARD COLOURS, READOUTS & TARGET CHALLENGE
+      // =========================================================================
+      function updateUI() {
+        const currentVal = getCurrentValue();
+        const colourInfo = COLOURS_3BIT[currentVal];
+        const scenes = cardsGrid.querySelectorAll(".card-scene");
+        const badges = cardsGrid.querySelectorAll(".bit-badge");
+
+        // Update each card's flip state and colour-code active cards with the mixed colour
+        scenes.forEach((scene, i) => {
+          const isOn = state.bits[i];
+          const ch = CHANNELS[i];
+          const front = scene.querySelector(".card-front");
+          const mixedTag = scene.querySelector(".card-mixed-tag");
+
+          scene.classList.toggle("is-off", !isOn);
+          scene.setAttribute("aria-checked", String(isOn));
+          scene.setAttribute(
+            "aria-label",
+            `${ch.name} card, currently ${isOn ? `on (1), showing ${colourInfo.name}` : "off (0)"}`
+          );
+
+          // Colour-code the card front with the resulting mixed colour
+          front.style.backgroundColor = colourInfo.hex;
+          front.style.color = colourInfo.lightBg ? "#111827" : "#ffffff";
+          front.style.borderColor = colourInfo.value === 7 ? "#4b5563" : "#1f2937";
+          if (mixedTag) {
+            mixedTag.textContent = colourInfo.name;
+          }
+
+          if (badges[i]) {
+            badges[i].textContent = isOn ? "1" : "0";
+            badges[i].classList.toggle("is-one", isOn);
+          }
+        });
+
+        // Update Binary & RGB channel readouts
+        const rBit = state.bits[0] ? 1 : 0;
+        const gBit = state.bits[1] ? 1 : 0;
+        const bBit = state.bits[2] ? 1 : 0;
+
+        binaryReadout.textContent = colourInfo.bits;
+        rgbBreakdown.textContent = `R: ${rBit}  |  G: ${gBit}  |  B: ${bBit}`;
+
+        // Update Live Colour Swatch & Name
+        liveColourSwatch.style.backgroundColor = colourInfo.hex;
+        colourNameOutput.textContent = colourInfo.name;
+        colourHexOutput.textContent = `${colourInfo.hex}  (Decimal: ${colourInfo.value})`;
+
+        // Highlight active cell in Reference Chart
+        const refCells = colourRefGrid.querySelectorAll(".ref-cell");
+        refCells.forEach((cell) => {
+          const cellVal = parseInt(cell.dataset.value, 10);
+          cell.classList.toggle("active-match", cellVal === currentVal);
+        });
+
+        // Target Colour Challenge Mode Evaluation
+        if (state.challengeMode) {
+          const targetInfo = COLOURS_3BIT[state.targetValue];
+          targetMiniSwatch.style.backgroundColor = targetInfo.hex;
+          targetColourName.textContent = targetInfo.name;
+
+          const isMatch = currentVal === state.targetValue;
+          if (isMatch && !state.targetSolved) {
+            state.targetSolved = true;
+            state.solvedCount += 1;
+          }
+
+          challengeBar.classList.toggle("solved", isMatch);
+          streakBadge.textContent = `Solved: ${state.solvedCount}`;
+
+          if (isMatch) {
+            challengeStatusIcon.textContent = "✅";
+            challengeFeedback.textContent = `Matched ${targetInfo.name} (${targetInfo.bits})!`;
+            btnNewTarget.textContent = "Next Colour →";
+          } else {
+            challengeStatusIcon.textContent = "🎯";
+            challengeFeedback.textContent = state.targetSolved
+              ? "Solved! Click Next Colour for a new challenge."
+              : "Flip the R, G, B cards to mix this colour.";
+            btnNewTarget.textContent = "New Colour";
+          }
+        }
+      }
+
+      // =========================================================================
+      // 9. EVENT HANDLERS
+      // =========================================================================
+      function toggleCard(index) {
+        state.bits[index] = !state.bits[index];
+        updateUI();
+      }
+
+      btnAllOff.addEventListener("click", () => {
+        state.bits = [false, false, false];
+        updateUI();
+      });
+
+      btnRandomColour.addEventListener("click", () => {
+        const current = getCurrentValue();
+        let nextVal = Math.floor(Math.random() * 8); // 0..7
+        if (nextVal === current) {
+          nextVal = (nextVal + 1) % 8;
+        }
+        setBitsFromValue(nextVal);
+        updateUI();
+      });
+
+      chkShowReference.addEventListener("change", (e) => {
+        state.showReference = e.target.checked;
+        referenceDrawer.classList.toggle("hidden", !state.showReference);
+      });
+
+      chkChallengeMode.addEventListener("change", (e) => {
+        state.challengeMode = e.target.checked;
+        challengeBar.classList.toggle("hidden", !state.challengeMode);
+        if (state.challengeMode) {
+          generateNewTargetColour();
+        }
+      });
+
+      btnNewTarget.addEventListener("click", () => {
+        generateNewTargetColour();
+      });
+
+      // Keyboard shortcuts: 1/2/3 or R/G/B toggle the 3 cards
+      document.addEventListener("keydown", (e) => {
+        if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
+          return;
+        }
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+        const key = e.key.toLowerCase();
+        if (key === "1" || key === "r") {
+          toggleCard(0);
+        } else if (key === "2" || key === "g") {
+          toggleCard(1);
+        } else if (key === "3" || key === "b") {
+          toggleCard(2);
+        }
+      });
+
+      // =========================================================================
+      // 10. INITIALIZE
+      // =========================================================================
+      buildColourReference();
+      buildCardsDOM();
+    })();
+  </script>
+</body>
+</html>
