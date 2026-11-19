@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Binary Cards Interactive — CS Field Guide Edition</title>
+  <style>
+    /* ==========================================================================
+       1. DESIGN TOKENS & RESET
+       ========================================================================== */
+    :root {
+      --bg-page: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+
+      --brand-blue: #1d4ed8;
+      --brand-blue-dark: #1e3a8a;
+      --brand-blue-light: #eff6ff;
+      --brand-accent: #0284c7;
+
+      --success-bg: #dcfce7;
+      --success-border: #22c55e;
+      --success-text: #15803d;
+
+      --card-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.06);
+      --card-shadow-hover: 0 16px 28px -6px rgba(15, 23, 42, 0.18), 0 6px 12px -3px rgba(15, 23, 42, 0.08);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.25rem 1rem 2.5rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ==========================================================================
+       2. LAYOUT & HEADER
+       ========================================================================== */
+    .app-container {
+      width: 100%;
+      max-width: 1120px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .app-header {
+      text-align: center;
+      padding: 0.25rem 0;
+    }
+
+    .app-header h1 {
+      font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .app-header p {
+      font-size: 0.925rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    /* ==========================================================================
+       3. CONTROL BAR & DISPLAY READOUTS
+       ========================================================================== */
+    .toolbar {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 0.9rem 1.15rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .control-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .control-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    select, input[type="number"] {
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.65rem;
+      cursor: pointer;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    select:focus, input[type="number"]:focus, button:focus-visible {
+      outline: none;
+      border-color: var(--brand-blue);
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.2);
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      padding: 0.45rem 0.85rem;
+      cursor: pointer;
+      border: 1px solid var(--border-medium);
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      user-select: none;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: var(--bg-subtle);
+      border-color: #94a3b8;
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button.btn-primary {
+      background-color: var(--brand-blue);
+      border-color: var(--brand-blue);
+      color: #ffffff;
+    }
+
+    button.btn-primary:hover:not(:disabled) {
+      background-color: var(--brand-blue-dark);
+      border-color: var(--brand-blue-dark);
+    }
+
+    /* Toggle switches */
+    .toggle-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-subtle);
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease;
+    }
+
+    .toggle-pill:hover {
+      background: #e2e8f0;
+    }
+
+    .toggle-pill input[type="checkbox"] {
+      accent-color: var(--brand-blue);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       4. CHALLENGE BANNER (OPTIONAL TARGET MODE)
+       ========================================================================== */
+    .challenge-bar {
+      background: var(--brand-blue-light);
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius-lg);
+      padding: 0.85rem 1.2rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .challenge-bar.solved {
+      background: var(--success-bg);
+      border-color: var(--success-border);
+    }
+
+    .challenge-prompt {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--brand-blue-dark);
+    }
+
+    .challenge-bar.solved .challenge-prompt {
+      color: var(--success-text);
+    }
+
+    .target-badge {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 800;
+      background: #ffffff;
+      color: var(--brand-blue);
+      padding: 0.15rem 0.65rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid #93c5fd;
+    }
+
+    .challenge-bar.solved .target-badge {
+      color: var(--success-text);
+      border-color: #86efac;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ==========================================================================
+       5. BINARY CARDS STAGE & 3D FLIP MECHANICS
+       ========================================================================== */
+    .stage-wrapper {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-xl);
+      padding: 1.5rem 1rem 1.75rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .cards-grid {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: clamp(0.45rem, 1.5vw, 1rem);
+      width: 100%;
+      overflow-x: auto;
+      padding: 0.5rem 0.25rem 0.75rem;
+    }
+
+    /* Individual card column (Card + Bit Indicator underneath) */
+    .card-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.65rem;
+      flex: 0 1 132px;
+      min-width: 74px;
+    }
+
+    /* 3D Perspective Container */
+    .card-scene {
+      width: 100%;
+      aspect-ratio: 2.5 / 3.6;
+      perspective: 1000px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      border-radius: var(--radius-md);
+    }
+
+    .card-scene:focus-visible {
+      outline: 3px solid var(--brand-blue);
+      outline-offset: 4px;
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-style: preserve-3d;
+    }
+
+    /* When face-down (bit = 0), rotate 180deg to show card back */
+    .card-scene.is-off .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-scene:hover .card-inner {
+      transform: translateY(-3px);
+    }
+
+    .card-scene.is-off:hover .card-inner {
+      transform: rotateY(180deg) translateY(-3px);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: var(--radius-md);
+      box-shadow: var(--card-shadow);
+      transition: box-shadow 0.2s ease;
+      overflow: hidden;
+    }
+
+    .card-scene:hover .card-face {
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    /* ==========================================================================
+       6. CARD FRONT (FACE UP = 1)
+       ========================================================================== */
+    .card-front {
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(0.35rem, 1vw, 0.6rem);
+    }
+
+    .dots-area {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 2px;
+    }
+
+    /* Dot Grid Layouts tailored per power of 2 */
+    .dot-matrix {
+      display: grid;
+      width: 100%;
+      height: 100%;
+      place-items: center;
+      gap: 2px;
+    }
+
+    .dot {
+      background-color: #0f172a;
+      border-radius: 50%;
+      display: block;
+      box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.25);
+    }
+
+    /* Specific grid sizing for clean playing-card / CS Unplugged aesthetics */
+    .dots-1 { grid-template-columns: 1fr; }
+    .dots-1 .dot { width: 34%; max-width: 34px; aspect-ratio: 1; }
+
+    .dots-2 { grid-template-columns: 1fr; grid-template-rows: repeat(2, 1fr); }
+    .dots-2 .dot { width: 28%; max-width: 28px; aspect-ratio: 1; }
+
+    .dots-4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
+    .dots-4 .dot { width: 46%; max-width: 24px; aspect-ratio: 1; }
+
+    .dots-8 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); }
+    .dots-8 .dot { width: 38%; max-width: 18px; aspect-ratio: 1; }
+
+    .dots-16 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
+    .dots-16 .dot { width: 58%; max-width: 13px; aspect-ratio: 1; }
+
+    .dots-32 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(8, 1fr); }
+    .dots-32 .dot { width: 46%; max-width: 9px; aspect-ratio: 1; }
+
+    .dots-64 { grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); }
+    .dots-64 .dot { width: 64%; max-width: 7px; aspect-ratio: 1; }
+
+    .dots-128 { grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(16, 1fr); }
+    .dots-128 .dot { width: 52%; max-width: 5px; aspect-ratio: 1; }
+
+    /* Card Value Label at bottom of front face */
+    .card-value-label {
+      border-top: 1px solid var(--border-light);
+      padding-top: 0.3rem;
+      margin-top: 0.25rem;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: clamp(0.85rem, 1.6vw, 1.15rem);
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.1;
+      transition: opacity 0.2s ease;
+    }
+
+    .hide-labels .card-value-label {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* ==========================================================================
+       7. CARD BACK (FACE DOWN = 0) - CS UNPLUGGED / FIELD GUIDE PATTERN
+       ========================================================================== */
+    .card-back {
+      transform: rotateY(180deg);
+      background-color: #1e40af;
+      border: 4px solid #ffffff;
+      outline: 2px solid #93c5fd;
+      outline-offset: -2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* Classic crosshatch playing-card back pattern */
+      background-image:
+        repeating-linear-gradient(
+          45deg,
+          rgba(255, 255, 255, 0.12) 0px,
+          rgba(255, 255, 255, 0.12) 4px,
+          transparent 4px,
+          transparent 10px
+        ),
+        repeating-linear-gradient(
+          -45deg,
+          rgba(255, 255, 255, 0.12) 0px,
+          rgba(255, 255, 255, 0.12) 4px,
+          transparent 4px,
+          transparent 10px
+        ),
+        radial-gradient(circle at center, #2563eb 0%, #1e3a8a 100%);
+    }
+
+    .card-back-emblem {
+      width: 56%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.14);
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: clamp(0.75rem, 1.4vw, 1rem);
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.85);
+      letter-spacing: 0.05em;
+    }
+
+    /* ==========================================================================
+       8. BIT INDICATOR BADGE UNDERNEATH EACH CARD
+       ========================================================================== */
+    .bit-badge {
+      font-family: var(--font-mono);
+      font-size: clamp(1.05rem, 2vw, 1.35rem);
+      font-weight: 800;
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--border-medium);
+      background-color: var(--bg-subtle);
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .bit-badge.is-one {
+      background-color: var(--brand-blue);
+      border-color: var(--brand-blue-dark);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(29, 78, 216, 0.28);
+    }
+
+    /* ==========================================================================
+       9. READOUT DASHBOARD (BINARY STRING & DECIMAL TOTAL)
+       ========================================================================== */
+    .readout-panel {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      justify-content: center;
+      gap: 1rem;
+      border-top: 1px solid var(--border-light);
+      padding-top: 1.25rem;
+    }
+
+    .readout-box {
+      flex: 1 1 240px;
+      max-width: 380px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .readout-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .readout-value {
+      font-family: var(--font-mono);
+      font-size: clamp(1.5rem, 3vw, 2.1rem);
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: 0.08em;
+      line-height: 1.2;
+    }
+
+    .readout-value.decimal-val {
+      color: var(--brand-blue);
+      letter-spacing: normal;
+    }
+
+    .equation-strip {
+      width: 100%;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      min-height: 1.3rem;
+    }
+
+    /* ==========================================================================
+       10. EMBED / URL HELPER FOOTER
+       ========================================================================== */
+    .footer-note {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 0.75rem 0.6rem 1.75rem;
+      }
+      .toolbar {
+        padding: 0.75rem;
+        justify-content: center;
+      }
+      .cards-grid {
+        justify-content: flex-start;
+      }
+      .cards-grid.fits-viewport {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-container">
+    <!-- Header -->
+    <header class="app-header" id="app-header">
+      <h1>Binary Cards</h1>
+      <p>Click cards to flip them face-up (<strong>1</strong>) or face-down (<strong>0</strong>) to represent numbers in binary.</p>
+    </header>
+
+    <!-- Controls Toolbar -->
+    <section class="toolbar" aria-label="Binary Cards Controls" id="toolbar">
+      <div class="control-group" id="card-count-group">
+        <label class="control-label" for="card-count-select">
+          Number of cards:
+          <select id="card-count-select" aria-label="Number of binary cards">
+            <option value="1">1 bit (max 1)</option>
+            <option value="2">2 bits (max 3)</option>
+            <option value="3">3 bits (max 7)</option>
+            <option value="4">4 bits (max 15)</option>
+            <option value="5" selected>5 bits (max 31)</option>
+            <option value="6">6 bits (max 63)</option>
+            <option value="7">7 bits (max 127)</option>
+            <option value="8">8 bits (max 255)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="control-group">
+        <button type="button" id="btn-all-off" title="Set all bits to 0">Flip All Off (0)</button>
+        <button type="button" id="btn-all-on" title="Set all bits to 1">Flip All On (1)</button>
+        <button type="button" id="btn-random" title="Generate a random binary number">Randomize</button>
+      </div>
+
+      <div class="control-group">
+        <label class="toggle-pill" id="toggle-total-pill">
+          <input type="checkbox" id="chk-show-total" checked />
+          Show Decimal Total
+        </label>
+        <label class="toggle-pill">
+          <input type="checkbox" id="chk-show-labels" checked />
+          Show Card Values
+        </label>
+        <label class="toggle-pill">
+          <input type="checkbox" id="chk-challenge-mode" />
+          Target Challenge
+        </label>
+      </div>
+    </section>
+
+    <!-- Target Decimal Challenge Bar -->
+    <section class="challenge-bar hidden" id="challenge-bar" aria-live="polite">
+      <div class="challenge-prompt">
+        <span id="challenge-status-icon">🎯</span>
+        <span>Make the number:</span>
+        <span class="target-badge" id="target-number-display">0</span>
+        <span id="challenge-feedback" style="font-weight: 700;"></span>
+      </div>
+      <div class="control-group">
+        <label class="control-label" for="custom-target-input" style="font-size: 0.8rem;">
+          Set target:
+          <input type="number" id="custom-target-input" min="0" max="31" style="width: 72px;" aria-label="Custom target decimal number" />
+        </label>
+        <button type="button" class="btn-primary" id="btn-new-target">New Random Target</button>
+      </div>
+    </section>
+
+    <!-- Interactive Cards Stage -->
+    <section class="stage-wrapper" aria-label="Binary Cards Interactive Stage">
+      <div class="cards-grid fits-viewport" id="cards-grid" role="group" aria-label="Binary bit cards">
+        <!-- Cards dynamically rendered via JavaScript -->
+      </div>
+
+      <div class="equation-strip" id="equation-strip" aria-live="polite"></div>
+
+      <!-- Binary & Decimal Readouts -->
+      <div class="readout-panel" id="readout-panel">
+        <div class="readout-box">
+          <span class="readout-title">Binary Representation</span>
+          <span class="readout-value" id="binary-readout" aria-live="polite">00000</span>
+        </div>
+        <div class="readout-box" id="decimal-readout-box">
+          <span class="readout-title">Decimal Total</span>
+          <span class="readout-value decimal-val" id="decimal-readout" aria-live="polite">0</span>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer-note" id="footer-note">
+      Tip: Use <kbd>Tab</kbd> and <kbd>Space</kbd>/<kbd>Enter</kbd> to flip cards with your keyboard. Supports URL params like <code>?cards=6&amp;hide_total=true&amp;lock_cards=true</code>.
+    </footer>
+  </main>
+
+  <script>
+    /**
+     * CS Field Guide Style — Binary Cards Interactive
+     * Self-contained client-side implementation with URL embed parameter support.
+     */
+    (function () {
+      "use strict";
+
+      // =========================================================================
+      // 1. PARSE OPTIONAL URL QUERY PARAMETERS (CS Field Guide Embed Compatibility)
+      // =========================================================================
+      const params = new URLSearchParams(window.location.search);
+
+      function parseBoolParam(name, defaultVal) {
+        if (!params.has(name)) return defaultVal;
+        const val = params.get(name).toLowerCase();
+        return val === "true" || val === "1" || val === "yes";
+      }
+
+      const initialCardCount = Math.min(8, Math.max(1, parseInt(params.get("cards"), 10) || 5));
+      const hideTotalParam = parseBoolParam("hide_total", false);
+      const lockCardsParam = parseBoolParam("lock_cards", false);
+      const hideLabelsParam = parseBoolParam("hide_labels", false);
+      const minimalEmbedParam = parseBoolParam("embed", false);
+      const initialValueParam = params.has("value") ? Math.max(0, parseInt(params.get("value"), 10) || 0) : null;
+
+      // =========================================================================
+      // 2. APPLICATION STATE
+      // =========================================================================
+      const state = {
+        numCards: initialCardCount,
+        // Array of booleans ordered from MSB (highest power of 2 on left) to LSB (1 on right)
+        bits: new Array(initialCardCount).fill(false),
+        showTotal: !hideTotalParam,
+        showLabels: !hideLabelsParam,
+        challengeMode: false,
+        targetValue: 0
+      };
+
+      // =========================================================================
+      // 3. DOM REFERENCES
+      // =========================================================================
+      const cardsGrid = document.getElementById("cards-grid");
+      const cardCountSelect = document.getElementById("card-count-select");
+      const cardCountGroup = document.getElementById("card-count-group");
+      const btnAllOff = document.getElementById("btn-all-off");
+      const btnAllOn = document.getElementById("btn-all-on");
+      const btnRandom = document.getElementById("btn-random");
+      const chkShowTotal = document.getElementById("chk-show-total");
+      const chkShowLabels = document.getElementById("chk-show-labels");
+      const chkChallengeMode = document.getElementById("chk-challenge-mode");
+      const binaryReadout = document.getElementById("binary-readout");
+      const decimalReadout = document.getElementById("decimal-readout");
+      const decimalReadoutBox = document.getElementById("decimal-readout-box");
+      const equationStrip = document.getElementById("equation-strip");
+      const challengeBar = document.getElementById("challenge-bar");
+      const targetNumberDisplay = document.getElementById("target-number-display");
+      const customTargetInput = document.getElementById("custom-target-input");
+      const btnNewTarget = document.getElementById("btn-new-target");
+      const challengeFeedback = document.getElementById("challenge-feedback");
+      const challengeStatusIcon = document.getElementById("challenge-status-icon");
+
+      // =========================================================================
+      // 4. INITIALIZE UI FROM URL PARAMETERS
+      // =========================================================================
+      cardCountSelect.value = String(state.numCards);
+      chkShowTotal.checked = state.showTotal;
+      chkShowLabels.checked = state.showLabels;
+
+      if (lockCardsParam) {
+        cardCountGroup.classList.add("hidden");
+      }
+
+      if (minimalEmbedParam) {
+        document.getElementById("app-header").classList.add("hidden");
+        document.getElementById("footer-note").classList.add("hidden");
+      }
+
+      if (initialValueParam !== null) {
+        setBitsFromDecimal(initialValueParam);
+      }
+
+      // =========================================================================
+      // 5. HELPER FUNCTIONS
+      // =========================================================================
+      function getMaxDecimalValue() {
+        return Math.pow(2, state.numCards) - 1;
+      }
+
+      function calculateDecimalTotal() {
+        let total = 0;
+        for (let i = 0; i < state.numCards; i++) {
+          if (state.bits[i]) {
+            const power = state.numCards - 1 - i;
+            total += Math.pow(2, power);
+          }
+        }
+        return total;
+      }
+
+      function setBitsFromDecimal(decimalVal) {
+        const clamped = Math.max(0, Math.min(getMaxDecimalValue(), Math.floor(decimalVal)));
+        for (let i = 0; i < state.numCards; i++) {
+          const power = state.numCards - 1 - i;
+          const placeVal = Math.pow(2, power);
+          state.bits[i] = Boolean(clamped & placeVal);
+        }
+      }
+
+      function generateNewRandomTarget() {
+        const max = getMaxDecimalValue();
+        const current = calculateDecimalTotal();
+        let nextTarget = Math.floor(Math.random() * max) + 1;
+        if (max > 1 && nextTarget === current) {
+          nextTarget = (nextTarget % max) + 1;
+        }
+        state.targetValue = nextTarget;
+        customTargetInput.max = String(max);
+        customTargetInput.value = String(nextTarget);
+        updateReadouts();
+      }
+
+      // =========================================================================
+      // 6. RENDERING CARDS & UPDATING UI
+      // =========================================================================
+      function buildCardsDOM() {
+        cardsGrid.innerHTML = "";
+        cardsGrid.classList.toggle("fits-viewport", state.numCards <= 6);
+        cardsGrid.classList.toggle("hide-labels", !state.showLabels);
+
+        for (let i = 0; i < state.numCards; i++) {
+          const power = state.numCards - 1 - i;
+          const placeValue = Math.pow(2, power);
+          const isOn = state.bits[i];
+
+          // Slot container
+          const slot = document.createElement("div");
+          slot.className = "card-slot";
+
+          // Interactive 3D Card Scene
+          const scene = document.createElement("div");
+          scene.className = "card-scene" + (isOn ? "" : " is-off");
+          scene.setAttribute("role", "switch");
+          scene.setAttribute("tabindex", "0");
+          scene.setAttribute("aria-checked", String(isOn));
+          scene.setAttribute(
+            "aria-label",
+            `Card value ${placeValue}, currently ${isOn ? "face up (1)" : "face down (0)"}`
+          );
+          scene.dataset.index = String(i);
+
+          // Card Inner Flipper
+          const inner = document.createElement("div");
+          inner.className = "card-inner";
+
+          // Card Front (Dots + Decimal Value)
+          const front = document.createElement("div");
+          front.className = "card-face card-front";
+
+          const dotsArea = document.createElement("div");
+          dotsArea.className = "dots-area";
+
+          const dotMatrix = document.createElement("div");
+          dotMatrix.className = `dot-matrix dots-${placeValue}`;
+          dotMatrix.setAttribute("aria-hidden", "true");
+
+          for (let d = 0; d < placeValue; d++) {
+            const dot = document.createElement("span");
+            dot.className = "dot";
+            dotMatrix.appendChild(dot);
+          }
+
+          dotsArea.appendChild(dotMatrix);
+
+          const label = document.createElement("div");
+          label.className = "card-value-label";
+          label.textContent = String(placeValue);
+
+          front.appendChild(dotsArea);
+          front.appendChild(label);
+
+          // Card Back (Blue CS Unplugged pattern)
+          const back = document.createElement("div");
+          back.className = "card-face card-back";
+          back.setAttribute("aria-hidden", "true");
+
+          const emblem = document.createElement("div");
+          emblem.className = "card-back-emblem";
+          emblem.textContent = "0";
+          back.appendChild(emblem);
+
+          inner.appendChild(front);
+          inner.appendChild(back);
+          scene.appendChild(inner);
+
+          // Bit indicator badge underneath
+          const badge = document.createElement("div");
+          badge.className = "bit-badge" + (isOn ? " is-one" : "");
+          badge.textContent = isOn ? "1" : "0";
+          badge.setAttribute("aria-hidden", "true");
+
+          // Event listeners for click and keyboard activation
+          scene.addEventListener("click", () => toggleCard(i));
+          scene.addEventListener("keydown", (e) => {
+            if (e.key === " " || e.key === "Enter") {
+              e.preventDefault();
+              toggleCard(i);
+            }
+          });
+
+          slot.appendChild(scene);
+          slot.appendChild(badge);
+          cardsGrid.appendChild(slot);
+        }
+
+        updateReadouts();
+      }
+
+      function syncCardStates() {
+        const scenes = cardsGrid.querySelectorAll(".card-scene");
+        const badges = cardsGrid.querySelectorAll(".bit-badge");
+        cardsGrid.classList.toggle("hide-labels", !state.showLabels);
+
+        scenes.forEach((scene, i) => {
+          const isOn = state.bits[i];
+          const power = state.numCards - 1 - i;
+          const placeValue = Math.pow(2, power);
+
+          scene.classList.toggle("is-off", !isOn);
+          scene.setAttribute("aria-checked", String(isOn));
+          scene.setAttribute(
+            "aria-label",
+            `Card value ${placeValue}, currently ${isOn ? "face up (1)" : "face down (0)"}`
+          );
+
+          if (badges[i]) {
+            badges[i].textContent = isOn ? "1" : "0";
+            badges[i].classList.toggle("is-one", isOn);
+          }
+        });
+
+        updateReadouts();
+      }
+
+      function updateReadouts() {
+        const binaryString = state.bits.map((b) => (b ? "1" : "0")).join("");
+        const decimalTotal = calculateDecimalTotal();
+
+        binaryReadout.textContent = binaryString;
+        decimalReadout.textContent = String(decimalTotal);
+
+        // Toggle visibility of decimal readout
+        decimalReadoutBox.classList.toggle("hidden", !state.showTotal);
+
+        // Build addition equation helper when total is shown
+        if (state.showTotal) {
+          const activeTerms = [];
+          for (let i = 0; i < state.numCards; i++) {
+            if (state.bits[i]) {
+              activeTerms.push(Math.pow(2, state.numCards - 1 - i));
+            }
+          }
+          if (activeTerms.length === 0) {
+            equationStrip.textContent = "All cards face down = 0";
+          } else if (activeTerms.length === 1) {
+            equationStrip.textContent = `${activeTerms[0]} = ${decimalTotal}`;
+          } else {
+            equationStrip.textContent = `${activeTerms.join(" + ")} = ${decimalTotal}`;
+          }
+        } else {
+          equationStrip.textContent = "";
+        }
+
+        // Challenge mode evaluation
+        if (state.challengeMode) {
+          targetNumberDisplay.textContent = String(state.targetValue);
+          const isSolved = decimalTotal === state.targetValue;
+          challengeBar.classList.toggle("solved", isSolved);
+          if (isSolved) {
+            challengeStatusIcon.textContent = "✅";
+            challengeFeedback.textContent = "— Matched! Great job!";
+          } else {
+            challengeStatusIcon.textContent = "🎯";
+            challengeFeedback.textContent = "";
+          }
+        }
+      }
+
+      // =========================================================================
+      // 7. USER INTERACTION HANDLERS
+      // =========================================================================
+      function toggleCard(index) {
+        state.bits[index] = !state.bits[index];
+        syncCardStates();
+      }
+
+      cardCountSelect.addEventListener("change", (e) => {
+        const newCount = parseInt(e.target.value, 10);
+        const currentDecimal = calculateDecimalTotal();
+        state.numCards = newCount;
+        state.bits = new Array(newCount).fill(false);
+
+        // Preserve existing decimal value if it still fits within the new bit width
+        if (currentDecimal <= getMaxDecimalValue()) {
+          setBitsFromDecimal(currentDecimal);
+        }
+
+        customTargetInput.max = String(getMaxDecimalValue());
+        if (state.targetValue > getMaxDecimalValue()) {
+          generateNewRandomTarget();
+        }
+
+        buildCardsDOM();
+      });
+
+      btnAllOff.addEventListener("click", () => {
+        state.bits.fill(false);
+        syncCardStates();
+      });
+
+      btnAllOn.addEventListener("click", () => {
+        state.bits.fill(true);
+        syncCardStates();
+      });
+
+      btnRandom.addEventListener("click", () => {
+        const max = getMaxDecimalValue();
+        const current = calculateDecimalTotal();
+        let rand = Math.floor(Math.random() * (max + 1));
+        if (max > 0 && rand === current) {
+          rand = (rand + 1) % (max + 1);
+        }
+        setBitsFromDecimal(rand);
+        syncCardStates();
+      });
+
+      chkShowTotal.addEventListener("change", (e) => {
+        state.showTotal = e.target.checked;
+        updateReadouts();
+      });
+
+      chkShowLabels.addEventListener("change", (e) => {
+        state.showLabels = e.target.checked;
+        syncCardStates();
+      });
+
+      chkChallengeMode.addEventListener("change", (e) => {
+        state.challengeMode = e.target.checked;
+        challengeBar.classList.toggle("hidden", !state.challengeMode);
+        if (state.challengeMode) {
+          generateNewRandomTarget();
+        }
+      });
+
+      btnNewTarget.addEventListener("click", () => {
+        generateNewRandomTarget();
+      });
+
+      customTargetInput.addEventListener("input", (e) => {
+        const parsed = parseInt(e.target.value, 10);
+        if (!isNaN(parsed)) {
+          state.targetValue = Math.max(0, Math.min(getMaxDecimalValue(), parsed));
+          updateReadouts();
+        }
+      });
+
+      // =========================================================================
+      // 8. INITIAL RENDER
+      // =========================================================================
+      buildCardsDOM();
+    })();
+  </script>
+</body>
+</html>
