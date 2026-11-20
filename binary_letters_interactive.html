@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+​<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -705,7 +706,7 @@
     <!-- Header -->
     <header class="app-header" id="app-header">
       <h1>Binary Letters Decoder</h1>
-      <p>Flip the 5 binary cards to represent a number from <strong>1</strong> to <strong>25</strong> and reveal its lowercase letter (<strong>a</strong>–<strong>y</strong>).</p>
+      <p>Flip the 5 binary cards to represent a number from <strong>1</strong> to <strong>26</strong> and reveal its lowercase letter (<strong>a</strong>–<strong>z</strong>).</p>
     </header>
 
     <!-- Controls Toolbar -->
@@ -722,7 +723,7 @@
         </label>
         <label class="toggle-pill">
           <input type="checkbox" id="chk-show-reference" />
-          Alphabet Code Reference (1–25)
+          Alphabet Code Reference (1–26)
         </label>
         <label class="toggle-pill" id="toggle-challenge-pill">
           <input type="checkbox" id="chk-challenge-mode" />
@@ -749,10 +750,10 @@
     <section class="reference-drawer hidden" id="reference-drawer" aria-label="Alphabet Code Reference">
       <div class="reference-header">
         <span>Alphabet Code Reference (Click any letter to set the cards)</span>
-        <span>0 = empty &nbsp;|&nbsp; 26–31 = out of range</span>
+        <span>0 = empty &nbsp;|&nbsp; 27–31 = out of range</span>
       </div>
       <div class="alphabet-grid" id="alphabet-grid">
-        <!-- Populated dynamically for 1=a through 25=y -->
+        <!-- Populated dynamically for 1=a through 26=z -->
       </div>
     </section>
 
@@ -792,8 +793,8 @@
      * Binary Letters Interactive (5-Bit Lowercase Letter Decoder)
      * - 5 fixed cards: 16, 8, 4, 2, 1
      * - 0 => nothing / empty
-     * - 1..25 => 'a'..'y'
-     * - > 25 (26..31) => "not a lower case letter between 'a' and 'z'"
+     * - 1..26 => 'a'..'z'
+     * - > 26 (27..31) => "not a lower case letter between 'a' and 'z'"
      */
     (function () {
       "use strict";
@@ -828,7 +829,7 @@
         showDecimal: !hideDecimalParam,
         showReference: showRefParam,
         challengeMode: challengeParam,
-        targetValue: 1, // 1..25 ('a'..'y')
+        targetValue: 1, // 1..26 ('a'..'z')
         targetSolved: false,
         solvedCount: 0
       };
@@ -892,12 +893,12 @@
       function generateNewTargetLetter() {
         const currentTotal = calculateDecimalTotal();
         const prevTarget = state.targetValue;
-        let nextTarget = Math.floor(Math.random() * 25) + 1; // 1..25 ('a'..'y')
+        let nextTarget = Math.floor(Math.random() * 26) + 1; // 1..26 ('a'..'z')
 
         // Avoid picking the exact same target or one that is already matched on the cards
         let guard = 0;
         while ((nextTarget === prevTarget || nextTarget === currentTotal) && guard < 20) {
-          nextTarget = Math.floor(Math.random() * 25) + 1;
+          nextTarget = Math.floor(Math.random() * 26) + 1;
           guard++;
         }
 
@@ -915,11 +916,11 @@
       }
 
       // =========================================================================
-      // 5. BUILD ALPHABET REFERENCE GRID (1 = a ... 25 = y)
+      // 5. BUILD ALPHABET REFERENCE GRID (1 = a ... 26 = z)
       // =========================================================================
       function buildAlphabetReference() {
         alphabetGrid.innerHTML = "";
-        for (let n = 1; n <= 25; n++) {
+        for (let n = 1; n <= 26; n++) {
           const letter = String.fromCharCode(96 + n);
           const cell = document.createElement("button");
           cell.type = "button";
@@ -1087,19 +1088,19 @@
           letterOutput.textContent = "";
           letterOutput.classList.add("is-empty");
           letterSubtext.textContent = "(empty / nothing)";
-        } else if (total >= 1 && total <= 25) {
-          // Rule: 1 = 'a', 2 = 'b', ..., 25 = 'y' (lowercase only)
+        } else if (total >= 1 && total <= 26) {
+          // Rule: 1 = 'a', 2 = 'b', ..., 26 = 'z' (lowercase only)
           const letter = String.fromCharCode(96 + total);
           letterOutput.textContent = letter;
           letterSubtext.textContent = state.showDecimal
             ? `Letter #${total} in the alphabet`
             : "Lowercase letter";
         } else {
-          // Rule: > 25 displays exact out-of-range message
+          // Rule: > 26 displays exact out-of-range message
           letterReadoutBox.classList.add("is-invalid");
           letterOutput.classList.add("is-error-text");
           letterOutput.textContent = "not a lower case letter between 'a' and 'z'";
-          letterSubtext.textContent = state.showDecimal ? `Value ${total} is greater than 25` : "";
+          letterSubtext.textContent = state.showDecimal ? `Value ${total} is greater than 26` : "";
         }
 
         // Highlight matching cell in Alphabet Reference if open
@@ -1154,9 +1155,9 @@
 
       btnRandomLetter.addEventListener("click", () => {
         const current = calculateDecimalTotal();
-        let nextNum = Math.floor(Math.random() * 25) + 1; // 1..25 ('a'..'y')
+        let nextNum = Math.floor(Math.random() * 26) + 1; // 1..26 ('a'..'z')
         if (nextNum === current) {
-          nextNum = (nextNum % 25) + 1;
+          nextNum = (nextNum % 26) + 1;
         }
         setBitsFromDecimal(nextNum);
         syncCardStates();
